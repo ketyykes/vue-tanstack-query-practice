@@ -1,0 +1,77 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 關鍵轉換重點
+
+## 1. API層保持架構 (src/api/)
+- 保持 axios 配置模式
+- 保持路由工廠函式模式
+- 將 TypeScript 類型轉換為 JSDoc 註解
+- 保持錯誤處理策略
+
+## 2. 狀態管理轉換 (TanStack Query → Vue Query)
+```javascript
+// React 版本
+const { data, isLoading, error } = useBooksQuery(searchTerm)
+
+// Vue 版本
+const { data, isLoading, error } = useQuery({
+  queryKey: ['books', searchTerm],
+  queryFn: () => bookApi.getAll(searchTerm)
+})
+```
+
+## 3. 元件轉換 (React → Vue SFC)
+- 將 React 元件轉換為 Vue Single File Components
+- 使用 Composition API 取代 React Hooks
+- 保持相同的元件命名和組織結構
+- 維持相同的 Tailwind CSS 樣式
+
+## 4. 路由轉換 (React Router → Vue Router)
+```javascript
+// Vue Router 配置對應 React Router 結構
+const routes = [
+  { path: '/', component: HomePage },
+  { path: '/tanstack', component: TanstackPage },
+  { path: '/about', component: AboutPage }
+]
+```
+
+# 具體轉換需求
+
+## 1. 設定檔案轉換
+- `package.json`: 更新依賴包從 React 生態系轉換為 Vue 生態系
+- `vite.config.ts → vite.config.js`: 設定 Vue 插件
+- 更新 `index.html` 支援 Vue
+
+## 2. 核心檔案轉換
+- `main.tsx`: 轉換為 Vue 3 + Vue Query 的初始化設定
+- `App.tsx`: 轉換為 App.vue，保持路由結構
+- 路由器設定從 React Router 轉為 Vue Router
+
+## 3. 頁面和元件轉換
+- 所有 `.tsx` 檔案轉換為 `.vue` 檔案
+- 保持相同的元件層級和組織結構
+- 使用 Vue Composition API 取代 React Hooks
+- 保持相同的 props 傳遞和事件處理邏輯
+
+## 4. 查詢管理轉換
+- 將 TanStack Query hooks 轉換為 Vue Query composables
+- 保持相同的快取策略和查詢鍵結構
+- 維持相同的樂觀更新和錯誤處理機制
+
+## 5. 樣式系統維持
+- 完全保持現有的 Tailwind CSS 樣式
+- 維持響應式設計和樣式組織模式
+- 保持相同的設計令牌和視覺一致性
+
+## 轉換後的專案要求
+
+### 功能完整性
+- 所有現有功能必須完全對應
+- 書籍列表、搜尋、新增、編輯、刪除功能
+- 載入狀態、錯誤處理、樂觀更新
+- 響應式設計和使用者體驗
+
