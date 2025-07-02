@@ -13,5 +13,7 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-app.use(VueQueryPlugin)
+app.use(VueQueryPlugin, {
+  enableDevtoolsV6Plugin: true,
+})
 app.mount('#app')
