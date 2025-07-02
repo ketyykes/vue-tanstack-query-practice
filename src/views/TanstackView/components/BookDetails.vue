@@ -1,8 +1,9 @@
 <script setup>
 /** @typedef {import('../../../api/types/api').Book} Book */
 /**
+ * 書籍詳細資料
+ *
  * @type {import('vue').PropType<Book>}
- * @description 書籍詳細資料
  */
 defineProps({
   /** @type {import('vue').PropType<Book>} */
@@ -26,7 +27,6 @@ defineProps({
     </p>
     <p class="mb-2"><strong>庫存：</strong> {{ book.stock }}</p>
     <p class="mb-2"><strong>描述：</strong> {{ book.description }}</p>
-    <p class="mb-2"><strong>標籤：</strong> {{ book.tags?.join(', ') }}</p>
   </div>
 </template>
 

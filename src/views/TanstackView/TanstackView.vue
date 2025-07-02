@@ -29,7 +29,7 @@ const {
   data: books = [],
   isLoading: booksLoading,
   error: booksError,
-} = useBooksQuery(searchFilter)
+} = useBooksQuery(searchFilter.value)
 
 const { data: selectedBook, isLoading: bookLoading } = useBookQuery(
   selectedBookId,
@@ -115,9 +115,9 @@ const handleFormChange = (field, value) => {
 }
 
 // 處理滑鼠懸停時的預填充
-/** @type {(id: number) => void} */
-const handleBookHover = (id) => {
-  prefetchBookFn(id)
+/** @type {(book: Book) => void} */
+const handleBookHover = (book) => {
+  prefetchBookFn(book.id)
 }
 
 /** @type {(book: Book) => void} */
