@@ -1,6 +1,6 @@
 // 型別定義
 export interface Book {
-  id: number
+  id: string
   title: string
   author: string
   authorId: number
