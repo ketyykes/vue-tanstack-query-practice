@@ -4,11 +4,17 @@ import { computed, ref } from 'vue'
 import {
   useBookQuery,
   useBooksQuery,
+  useCreateBookMutation,
   useDeleteBookMutation,
   usePrefetchBook,
   useUpdateBookMutation,
 } from '../../query/query.js'
-import { BookDetailPanel, BookList, SearchFilter } from './components'
+import {
+  BookAddForm,
+  BookDetailPanel,
+  BookList,
+  SearchFilter,
+} from './components'
 
 /** @typedef {import('../../api/types/api').Book} Book */
 
@@ -23,6 +29,31 @@ const editingBook = ref(null)
 
 /** @type {import('vue').Ref<Partial<Book>>} */
 const editForm = ref({})
+
+// 新增書籍相關狀態
+/** @type {import('vue').Ref<boolean>} */
+const isAddingBook = ref(false)
+
+/** @type {import('vue').Ref<Omit<Book, 'id'>>} */
+const addForm = ref({
+  title: '',
+  author: '',
+  authorId: 1,
+  categoryId: 1,
+  price: 0,
+  originalPrice: 0,
+  isbn: '',
+  publisher: '',
+  publishDate: '',
+  pages: 0,
+  language: '',
+  description: '',
+  coverImage: '',
+  stock: 0,
+  rating: 0,
+  reviews: 0,
+  isRecommended: false,
+})
 
 // Vue Query hooks
 const {
@@ -40,6 +71,8 @@ const { isPending: isDeletePending, mutateAsync: deleteBookMutation } =
   useDeleteBookMutation()
 const { isPending: isUpdatePending, mutateAsync: updateBookMutation } =
   useUpdateBookMutation()
+const { isPending: isCreatePending, mutateAsync: createBookMutation } =
+  useCreateBookMutation()
 const prefetchBookFn = usePrefetchBook()
 
 // 處理書籍刪除
@@ -125,6 +158,100 @@ const onSelectBook = (book) => {
   console.log('book', book)
   selectedBookId.value = String(book.id)
 }
+
+// 新增書籍相關函式
+/** 開始新增書籍 */
+const handleStartAddBook = () => {
+  isAddingBook.value = true
+  // 重置表單
+  addForm.value = {
+    title: '',
+    author: '',
+    authorId: 1,
+    categoryId: 1,
+    price: 0,
+    originalPrice: 0,
+    isbn: '',
+    publisher: '',
+    publishDate: '',
+    pages: 0,
+    language: '',
+    description: '',
+    coverImage: '',
+    stock: 0,
+    rating: 0,
+    reviews: 0,
+    isRecommended: false,
+  }
+}
+
+/** 取消新增書籍 */
+const handleCancelAddBook = () => {
+  isAddingBook.value = false
+  addForm.value = {
+    title: '',
+    author: '',
+    authorId: 1,
+    categoryId: 1,
+    price: 0,
+    originalPrice: 0,
+    isbn: '',
+    publisher: '',
+    publishDate: '',
+    pages: 0,
+    language: '',
+    description: '',
+    coverImage: '',
+    stock: 0,
+    rating: 0,
+    reviews: 0,
+    isRecommended: false,
+  }
+}
+
+/**
+ * 處理新增書籍表單變更
+ *
+ * @type {(field: keyof Book, value: string | number | boolean) => void}
+ */
+const handleAddFormChange = (field, value) => {
+  addForm.value = {
+    ...addForm.value,
+    [field]: value,
+  }
+}
+
+/** 處理新增書籍 */
+const handleCreateBook = async () => {
+  try {
+    await createBookMutation(addForm.value)
+    isAddingBook.value = false
+    // 重置表單
+    addForm.value = {
+      title: '',
+      author: '',
+      authorId: 1,
+      categoryId: 1,
+      price: 0,
+      originalPrice: 0,
+      isbn: '',
+      publisher: '',
+      publishDate: '',
+      pages: 0,
+      language: '',
+      description: '',
+      coverImage: '',
+      stock: 0,
+      rating: 0,
+      reviews: 0,
+      isRecommended: false,
+    }
+    alert('書籍新增成功！')
+  } catch (error) {
+    console.error('新增書籍失敗：', error)
+    alert('新增失敗，請稍後再試')
+  }
+}
 </script>
 
 <template>
@@ -137,6 +264,17 @@ const onSelectBook = (book) => {
     <p class="mb-5 text-gray-600">遵循 tkdodo 最佳實踐的 Vue Query 實作範例</p>
 
     <SearchFilter v-model="searchFilter" />
+
+    <!-- 新增書籍按鈕 -->
+    <div class="mb-5">
+      <button
+        @click="handleStartAddBook"
+        class="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600"
+        :disabled="isAddingBook"
+      >
+        {{ isAddingBook ? '正在新增...' : '新增書籍' }}
+      </button>
+    </div>
 
     <div class="grid grid-cols-2 gap-5">
       <BookList
@@ -151,17 +289,29 @@ const onSelectBook = (book) => {
         @bookHover="handleBookHover"
       />
 
-      <BookDetailPanel
-        :selectedBookId="selectedBookId"
-        :selectedBook="selectedBook"
-        :isBookLoading="bookLoading"
-        :editingBook="editingBook"
-        :editForm="editForm"
-        :isUpdatePending="updateBookMutation.isPending"
-        @formChange="handleFormChange"
-        @update="handleUpdateBook"
-        @cancel="handleCancelEdit"
-      />
+      <!-- 新增書籍表單或書籍詳細資料面板 -->
+      <div v-if="isAddingBook">
+        <BookAddForm
+          :addForm="addForm"
+          :isCreatePending="isCreatePending"
+          @formChange="handleAddFormChange"
+          @create="handleCreateBook"
+          @cancel="handleCancelAddBook"
+        />
+      </div>
+      <div v-else>
+        <BookDetailPanel
+          :selectedBookId="selectedBookId"
+          :selectedBook="selectedBook"
+          :isBookLoading="bookLoading"
+          :editingBook="editingBook"
+          :editForm="editForm"
+          :isUpdatePending="updateBookMutation.isPending"
+          @formChange="handleFormChange"
+          @update="handleUpdateBook"
+          @cancel="handleCancelEdit"
+        />
+      </div>
     </div>
   </div>
 </template>
