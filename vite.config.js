@@ -23,6 +23,9 @@ export default defineConfig({
   ],
   server: {
     port: 3383,
+    watch: {
+      ignored: ['**/db.json'],
+    },
   },
   resolve: {
     alias: {
