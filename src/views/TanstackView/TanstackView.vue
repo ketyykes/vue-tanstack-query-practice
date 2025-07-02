@@ -1,9 +1,13 @@
 <script setup>
 import { computed, ref } from 'vue'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-
-import { bookApi } from '../../api/types/api.js'
+import {
+  useBookQuery,
+  useBooksQuery,
+  useDeleteBookMutation,
+  usePrefetchBook,
+  useUpdateBookMutation,
+} from '../../query/query.js'
 import { BookDetailPanel, BookList, SearchFilter } from './components'
 
 /** @typedef {import('../../api/types/api').Book} Book */
@@ -20,90 +24,43 @@ const editingBook = ref(null)
 /** @type {import('vue').Ref<Partial<Book>>} */
 const editForm = ref({})
 
-/** @type {import('vue').Ref<number | null>} */
-const deletingBookId = ref(null)
-
-// Vue Query 用戶端
-const queryClient = useQueryClient()
-
-// Vue Query - 書籍列表查詢
+// Vue Query hooks
 const {
-  data: books,
+  data: books = [],
   isLoading: booksLoading,
   error: booksError,
-} = useQuery({
-  queryKey: computed(() => ['books', searchFilter.value]),
-  queryFn: () =>
-    bookApi.getAll(
-      searchFilter.value ? `title_like=${searchFilter.value}` : undefined,
-    ),
-  select: (data) => data || [],
-})
+} = useBooksQuery(searchFilter)
 
-// Vue Query - 單一書籍查詢（利用 enabled 選項控制何時執行查詢）
-const { data: selectedBook, isLoading: bookLoading } = useQuery({
-  queryKey: computed(() => ['book', selectedBookId.value]),
-  queryFn: () => bookApi.getById(selectedBookId.value),
-  enabled: computed(() => !!selectedBookId.value),
-})
+const { data: selectedBook, isLoading: bookLoading } = useBookQuery(
+  selectedBookId,
+  computed(() => !!selectedBookId.value),
+)
 
-// Vue Query - 刪除書籍變更操作
-const deleteBookMutation = useMutation({
-  mutationFn: (id) => bookApi.delete(id),
-  onSuccess: () => {
-    // 刷新書籍列表
-    queryClient.invalidateQueries({ queryKey: ['books'] })
-  },
-})
-
-// Vue Query - 更新書籍變更操作
-const updateBookMutation = useMutation({
-  mutationFn: ({ id, data }) => bookApi.update(id, data),
-  onSuccess: () => {
-    // 刷新書籍列表和詳情
-    queryClient.invalidateQueries({ queryKey: ['books'] })
-    queryClient.invalidateQueries({ queryKey: ['book'] })
-  },
-})
-
-// 預填充函式
-/**
- * @type {(id: number) => void}
- * @description 預填充書籍詳情，優化使用者體驗
- */
-const prefetchBook = (id) => {
-  queryClient.prefetchQuery({
-    queryKey: ['book', id],
-    queryFn: () => bookApi.getById(id),
-  })
-}
+const deleteBookMutation = useDeleteBookMutation()
+const updateBookMutation = useUpdateBookMutation()
+const prefetchBookFn = usePrefetchBook()
 
 // 處理書籍刪除
 /**
+ * 處理書籍刪除
+ *
  * @type {(id: number) => Promise<void>}
- * @description 處理書籍刪除
  */
 const handleDeleteBook = async (id) => {
   if (window.confirm('確定要刪除這本書嗎？')) {
     try {
-      deletingBookId.value = id
       await deleteBookMutation.mutateAsync(id)
       if (selectedBookId.value === id) {
         selectedBookId.value = null
       }
     } catch (error) {
       console.error('刪除書籍失敗：', error)
-    } finally {
-      deletingBookId.value = null
     }
   }
 }
 
 // 開始編輯書籍
-/**
- * @type {(book: Book) => void}
- * @description 開始編輯書籍
- */
+/** @type {(book: Book) => void} */
 const handleEditBook = (book) => {
   editingBook.value = book
   editForm.value = {
@@ -122,20 +79,12 @@ const handleEditBook = (book) => {
 }
 
 // 取消編輯
-/**
- * @type {() => void}
- * @description 取消編輯
- */
 const handleCancelEdit = () => {
   editingBook.value = null
   editForm.value = {}
 }
 
 // 處理更新書籍
-/**
- * @type {() => Promise<void>}
- * @description 處理更新書籍
- */
 const handleUpdateBook = async () => {
   if (!editingBook.value) return
 
@@ -155,10 +104,7 @@ const handleUpdateBook = async () => {
 }
 
 // 處理表單欄位變更
-/**
- * @type {(field: keyof Book, value: string | number) => void}
- * @description 處理表單欄位變更
- */
+/** @type {(field: keyof Book, value: string | number) => void} */
 const handleFormChange = (field, value) => {
   editForm.value = {
     ...editForm.value,
@@ -167,17 +113,18 @@ const handleFormChange = (field, value) => {
 }
 
 // 處理滑鼠懸停時的預填充
-/**
- * @type {(id: number) => void}
- * @description 處理滑鼠懸停時的預填充
- */
+/** @type {(id: number) => void} */
 const handleBookHover = (id) => {
-  prefetchBook(id)
+  prefetchBookFn(id)
+}
+
+const onSelectBook = (book) => {
+  selectedBookId.value = book.id
 }
 </script>
 
 <template>
-  <div v-if="booksError" class="error">
+  <div v-if="booksError" class="text-center text-red-500">
     載入書籍時發生錯誤：{{ booksError.message }}
   </div>
   <div v-else class="tanstack-page mx-auto max-w-6xl p-5">
@@ -188,12 +135,12 @@ const handleBookHover = (id) => {
 
     <div class="grid grid-cols-2 gap-5">
       <BookList
-        :books="books || []"
+        :books="books"
         :isLoading="booksLoading"
-        :selectedBookId="selectedBookId"
-        :deletingBookId="deletingBookId"
+        :isDeletePending="deleteBookMutation.isPending"
         :isUpdatePending="updateBookMutation.isPending"
-        @selectBook="selectedBookId = Number($event)"
+        :selectedBookId="selectedBookId"
+        @selectBook="onSelectBook"
         @editBook="handleEditBook"
         @deleteBook="handleDeleteBook"
         @bookHover="handleBookHover"

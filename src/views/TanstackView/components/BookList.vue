@@ -6,36 +6,48 @@ import BookItem from './BookItem.vue'
 defineProps({
   /** @type {import('vue').PropType<Book[]>} */
   books: { type: Array, default: () => [] },
-  /** @type {import('vue').PropType<boolean>} */
   isLoading: { type: Boolean, default: false },
-  /** @type {import('vue').PropType<number | null>} */
   selectedBookId: { type: Number, default: null },
-  /** @type {import('vue').PropType<number | null>} */
   deletingBookId: { type: Number, default: null },
-  /** @type {import('vue').PropType<boolean>} */
   isUpdatePending: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['selectBook', 'editBook', 'deleteBook', 'bookHover'])
 
 /**
+ * 傳遞編輯書籍事件
+ *
  * @type {(book: Book) => void}
- * @description 傳遞編輯書籍事件
  */
 const onEditBook = (book) => {
   emit('editBook', book)
 }
 
+const onBookHover = (book) => {
+  emit('bookHover', book)
+}
+
 /**
+ * 傳遞刪除書籍事件
+ *
  * @type {(id: number) => void}
- * @description 傳遞刪除書籍事件
  */
 const onDeleteBook = (id) => {
   emit('deleteBook', id)
 }
+
+/**
+ * 傳遞選擇書籍事件
+ *
+ * @type {(book: Book) => void}
+ */
+const onSelectBook = (book) => {
+  emit('selectBook', book)
+}
 </script>
 
 <template>
+  {{ console.log(selectedBookId) }}
   <div>
     <h2 class="mb-3 text-xl font-semibold">書籍列表</h2>
     <div v-if="isLoading">載入中...</div>
@@ -51,10 +63,10 @@ const onDeleteBook = (id) => {
           :isSelected="selectedBookId === book.id"
           :isDeletePending="deletingBookId === book.id"
           :isUpdatePending="isUpdatePending"
-          @select="emit('selectBook', $event)"
+          @selectBook="onSelectBook"
           @edit="onEditBook"
           @delete="onDeleteBook"
-          @bookHover="emit('bookHover', $event)"
+          @bookHover="onBookHover"
         />
       </div>
     </div>

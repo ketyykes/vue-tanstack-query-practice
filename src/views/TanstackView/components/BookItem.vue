@@ -6,19 +6,17 @@ import { computed } from 'vue'
 const props = defineProps({
   /** @type {import('vue').PropType<Book>} */
   book: { type: Object, required: true },
-  /** @type {import('vue').PropType<boolean>} */
   isSelected: { type: Boolean, default: false },
-  /** @type {import('vue').PropType<boolean>} */
   isDeletePending: { type: Boolean, default: false },
-  /** @type {import('vue').PropType<boolean>} */
   isUpdatePending: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['select', 'edit', 'delete', 'bookHover'])
+const emit = defineEmits(['selectBook', 'edit', 'delete', 'bookHover'])
 
 /**
+ * 動態計算元件的 class
+ *
  * @type {import('vue').ComputedRef<string>}
- * @description 動態計算元件的 class
  */
 const itemClassName = computed(() => {
   const baseClass =
@@ -28,8 +26,9 @@ const itemClassName = computed(() => {
 })
 
 /**
+ * 處理編輯事件
+ *
  * @type {(e: MouseEvent) => void}
- * @description 處理編輯事件
  */
 const handleEdit = (e) => {
   e.stopPropagation()
@@ -37,20 +36,26 @@ const handleEdit = (e) => {
 }
 
 /**
+ * 處理刪除事件
+ *
  * @type {(e: MouseEvent) => void}
- * @description 處理刪除事件
  */
 const handleDelete = (e) => {
   e.stopPropagation()
   emit('delete', props.book.id)
+}
+
+const onSelectBook = () => {
+  console.log('hello')
+  emit('selectBook', props.book)
 }
 </script>
 
 <template>
   <div
     :class="itemClassName"
-    @click="emit('select', book.id)"
-    @mouseenter="emit('bookHover', book.id)"
+    @click="onSelectBook"
+    @mouseenter="emit('bookHover', book)"
   >
     <div class="font-bold">{{ book.title }}</div>
     <div class="text-sm text-gray-600">
