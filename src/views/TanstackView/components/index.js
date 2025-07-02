@@ -1,0 +1,6 @@
+export { default as SearchFilter } from './SearchFilter.vue'
+export { default as BookItem } from './BookItem.vue'
+export { default as BookList } from './BookList.vue'
+export { default as BookDetails } from './BookDetails.vue'
+export { default as BookEditForm } from './BookEditForm.vue'
+export { default as BookDetailPanel } from './BookDetailPanel.vue'
