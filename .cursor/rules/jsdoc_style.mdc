@@ -19,7 +19,9 @@ alwaysApply: true
    * **多型別或泛型** → 直接在 `@type` 內使用 `import('套件').Type<T>`
 4. **共用型別**：集中於 `*.d.ts` 檔並以 ES Module 匯出，再透過 `import()` 引入。
 5. **型別守衛**：必要時使用自訂 `value is SomeType` 讓編輯器進行型別窄化。
-6. **Vue 檔案**：於 `<script setup>` 中直接在 `defineProps` 內以 `/** @type {import('vue').PropType<...>} */` 標註。
+6. **Vue 檔案**：於 `<script setup>` 中的 `defineProps` 型別標註規則：
+   - **原始型別**（`string`、`number`、`boolean`、`Date`）：直接使用 Vue 原生語法
+   - **複雜型別**（物件、陣列、聯合型別、介面等）：使用 `/** @type {import('vue').PropType<...>} */` 標註
 7. **命名慣例**：
 
    * 介面 / 型別：使用 `PascalCase`。
@@ -168,6 +170,6 @@ const createAnimal = async (payload) => axios.post('/api/animals', payload)
 * [ ] 所有新函式、變數、常數必須含 `@type` 或 `@typedef`。
 * [ ] 引入第三方套件型別請使用 `import('package').Type`。
 * [ ] 共用型別定義放於 `.d.ts`，程式碼檔案僅引用。
-* [ ] Vue `<script setup>` 使用 `PropType` 配合 `@type` 註解。
+* [ ] Vue `<script setup>` 中：原始型別直接使用 Vue 原生語法，複雜型別才使用 `PropType` 配合 `@type` 註解。
 * [ ] 如有多型別回傳，提供 **型別守衛** 協助窄化。
 * [ ] 註解務必使用繁體中文（台灣用語）。
