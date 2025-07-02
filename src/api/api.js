@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-/** @typedef {import('./api.d.ts').Book} Book */
+/** @typedef {import('./types/api.js').Book} Book */
 
 /** @type {string} */
 const baseUrl = 'http://localhost:3004'
@@ -36,6 +36,7 @@ publicService.interceptors.response.use(
 
 /**
  * 路由工廠函式 - 產生書籍查詢 URL 字串
+ *
  * @type {(queryString?: string) => string}
  */
 const bookQueryRouteCreator = (queryString) => {
@@ -45,41 +46,47 @@ const bookQueryRouteCreator = (queryString) => {
 
 /**
  * 產生書籍詳細資料 URL
+ *
  * @type {(id: string | number) => string}
  */
 const bookDetailRouteCreator = (id) => `/books/${id}`
 
 /**
  * 產生書籍新增 URL
+ *
  * @type {() => string}
  */
 const bookAddRouteCreator = () => `/books`
 
 /**
  * 產生書籍更新 URL
+ *
  * @type {(id: string | number) => string}
  */
 const bookUpdateRouteCreator = (id) => `/books/${id}`
 
 /**
  * 產生書籍刪除 URL
+ *
  * @type {(id: string | number) => string}
  */
 const bookRemoveRouteCreator = (id) => `/books/${id}`
 
 /**
  * 書籍 API 物件，包含所有書籍相關的 CRUD 操作
+ *
  * @type {{
- *   getAll: (queryString?: string) => Promise<Book[]>,
- *   getById: (id: number) => Promise<Book>,
- *   create: (bookData: Omit<Book, "id">) => Promise<Book>,
- *   update: (id: number, bookData: Partial<Book>) => Promise<Book>,
+ *   getAll: (queryString?: string) => Promise<Book[]>
+ *   getById: (id: number) => Promise<Book>
+ *   create: (bookData: Omit<Book, 'id'>) => Promise<Book>
+ *   update: (id: number, bookData: Partial<Book>) => Promise<Book>
  *   delete: (id: number) => Promise<void>
  * }}
  */
 export const bookApi = {
   /**
    * 取得全部書籍（可選擇性帶入 query string）
+   *
    * @type {(queryString?: string) => Promise<Book[]>}
    */
   getAll: (queryString) =>
@@ -87,18 +94,21 @@ export const bookApi = {
 
   /**
    * 取得特定 ID 的書籍
+   *
    * @type {(id: number) => Promise<Book>}
    */
   getById: (id) => publicService.get(bookDetailRouteCreator(id)),
 
   /**
    * 新增書籍
-   * @type {(bookData: Omit<Book, "id">) => Promise<Book>}
+   *
+   * @type {(bookData: Omit<Book, 'id'>) => Promise<Book>}
    */
   create: (bookData) => publicService.post(bookAddRouteCreator(), bookData),
 
   /**
    * 更新書籍
+   *
    * @type {(id: number, bookData: Partial<Book>) => Promise<Book>}
    */
   update: (id, bookData) =>
@@ -106,6 +116,7 @@ export const bookApi = {
 
   /**
    * 刪除書籍
+   *
    * @type {(id: number) => Promise<void>}
    */
   delete: (id) => publicService.delete(bookRemoveRouteCreator(id)),
