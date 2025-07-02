@@ -1,0 +1,371 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Vue 元件開發指引
+
+本指引定義了專案中 Vue 元件的開發標準和最佳實踐。
+
+## 元件結構規範
+
+### 標準元件模板
+```vue
+<script setup>
+// 1. 導入依賴
+import { ref, computed, onMounted } from 'vue'
+
+// 2. 型別定義
+/** @typedef {import('../api/types/api').Book} Book */
+
+// 3. Props 定義
+const props = defineProps({
+  /** @type {import('vue').PropType<Book>} */
+  book: { type: Object, required: true },
+  isVisible: { type: Boolean, default: true },
+})
+
+// 4. Emits 定義
+const emit = defineEmits(['update', 'delete'])
+
+// 5. 本地狀態
+/** @type {import('vue').Ref<boolean>} */
+const isExpanded = ref(false)
+
+// 6. 計算屬性
+/** @type {import('vue').ComputedRef<string>} */
+const displayTitle = computed(() => {
+  return props.book.title.length > 30 
+    ? props.book.title.substring(0, 30) + '...'
+    : props.book.title
+})
+
+// 7. 方法
+/** @type {() => void} */
+const handleToggle = () => {
+  isExpanded.value = !isExpanded.value
+}
+
+// 8. 生命週期
+onMounted(() => {
+  // 初始化邏輯
+})
+</script>
+
+<template>
+  <!-- HTML 結構 -->
+</template>
+
+<style scoped>
+/* 元件專用樣式 */
+</style>
+```
+
+## Props 設計原則
+
+### 1. 型別安全的 Props
+```javascript
+const props = defineProps({
+  // 基本型別
+  title: { type: String, required: true },
+  count: { type: Number, default: 0 },
+  isActive: { type: Boolean, default: false },
+  
+  // 複雜型別 - 使用 PropType
+  /** @type {import('vue').PropType<Book>} */
+  book: { type: Object, required: true },
+  
+  /** @type {import('vue').PropType<Book[]>} */
+  books: { type: Array, default: () => [] },
+  
+  // 聯合型別
+  /** @type {import('vue').PropType<'small' | 'medium' | 'large'>} */
+  size: { type: String, default: 'medium' },
+})
+```
+
+### 2. Props 驗證
+```javascript
+const props = defineProps({
+  score: {
+    type: Number,
+    required: true,
+    validator: (value) => value >= 0 && value <= 100
+  },
+  email: {
+    type: String,
+    validator: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+  }
+})
+```
+
+## Events 設計模式
+
+### 1. 明確的事件命名
+```javascript
+// ✅ 好的事件命名
+const emit = defineEmits([
+  'book:select',     // 命名空間化
+  'book:delete',
+  'form:submit',
+  'modal:close'
+])
+
+// ❌ 避免的命名
+const emit = defineEmits([
+  'click',          // 太通用
+  'change',         // 不明確
+  'action'          // 意義不清
+])
+```
+
+### 2. 事件資料結構
+```javascript
+/** @type {(book: Book) => void} */
+const handleBookSelect = (book) => {
+  emit('book:select', {
+    book,
+    timestamp: Date.now(),
+    source: 'user-click'
+  })
+}
+```
+
+## 元件分類與職責
+
+### 1. 展示型元件 (Presentational Components)
+```vue
+<!-- BookCard.vue - 純展示元件 -->
+<script setup>
+const props = defineProps({
+  /** @type {import('vue').PropType<Book>} */
+  book: { type: Object, required: true },
+  showActions: { type: Boolean, default: true }
+})
+
+const emit = defineEmits(['select', 'favorite'])
+</script>
+
+<template>
+  <div class="book-card">
+    <img :src="book.coverImage" :alt="book.title" />
+    <h3>{{ book.title }}</h3>
+    <p>{{ book.author }}</p>
+    
+    <div v-if="showActions" class="actions">
+      <button @click="$emit('select', book)">選擇</button>
+      <button @click="$emit('favorite', book)">收藏</button>
+    </div>
+  </div>
+</template>
+```
+
+### 2. 容器型元件 (Container Components)
+```vue
+<!-- BookContainer.vue - 包含業務邏輯 -->
+<script setup>
+import { useBooksQuery, useDeleteBookMutation } from '../query/query.js'
+import BookCard from './BookCard.vue'
+
+const { data: books, isLoading } = useBooksQuery()
+const { mutateAsync: deleteBook } = useDeleteBookMutation()
+
+/** @type {(book: Book) => void} */
+const handleBookSelect = (book) => {
+  // 處理選擇邏輯
+}
+
+/** @type {(book: Book) => Promise<void>} */
+const handleBookDelete = async (book) => {
+  await deleteBook(book.id)
+}
+</script>
+
+<template>
+  <div class="book-container">
+    <BookCard
+      v-for="book in books"
+      :key="book.id"
+      :book="book"
+      @select="handleBookSelect"
+      @delete="handleBookDelete"
+    />
+  </div>
+</template>
+```
+
+## 表單元件模式
+
+### 1. 受控表單元件
+```vue
+<script setup>
+/** @typedef {import('../api/types/api').Book} Book */
+
+const props = defineProps({
+  /** @type {import('vue').PropType<Partial<Book>>} */
+  modelValue: { type: Object, default: () => ({}) }
+})
+
+const emit = defineEmits(['update:modelValue', 'submit'])
+
+/** @type {import('vue').ComputedRef<string>} */
+const title = computed({
+  get: () => props.modelValue.title || '',
+  set: (value) => {
+    emit('update:modelValue', {
+      ...props.modelValue,
+      title: value
+    })
+  }
+})
+
+/** @type {() => void} */
+const handleSubmit = () => {
+  emit('submit', props.modelValue)
+}
+</script>
+
+<template>
+  <form @submit.prevent="handleSubmit">
+    <input 
+      v-model="title"
+      type="text"
+      placeholder="書籍標題"
+      required
+    />
+    <button type="submit">提交</button>
+  </form>
+</template>
+```
+
+### 2. 表單驗證模式
+```javascript
+import { ref, computed } from 'vue'
+
+const form = ref({
+  title: '',
+  author: '',
+  price: 0
+})
+
+/** @type {import('vue').Ref<Record<string, string>>} */
+const errors = ref({})
+
+/** @type {import('vue').ComputedRef<boolean>} */
+const isValid = computed(() => {
+  return Object.keys(errors.value).length === 0
+})
+
+/** @type {() => void} */
+const validateForm = () => {
+  errors.value = {}
+  
+  if (!form.value.title.trim()) {
+    errors.value.title = '標題為必填欄位'
+  }
+  
+  if (form.value.price < 0) {
+    errors.value.price = '價格必須大於 0'
+  }
+}
+```
+
+## 樣式設計規範
+
+### 1. Tailwind CSS 使用
+```vue
+<template>
+  <!-- ✅ 語義化的 class 組合 -->
+  <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <!-- 內容 -->
+  </div>
+  
+  <!-- ✅ 響應式設計 -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <!-- 網格內容 -->
+  </div>
+</template>
+```
+
+## 效能最佳化
+
+### 1. 條件性載入
+```vue
+<script setup>
+import { defineAsyncComponent } from 'vue'
+
+// 延遲載入大型元件
+const HeavyComponent = defineAsyncComponent(() => 
+  import('./HeavyComponent.vue')
+)
+</script>
+
+<template>
+  <div>
+    <Suspense>
+      <HeavyComponent v-if="shouldLoad" />
+      <template #fallback>
+        <div>載入中...</div>
+      </template>
+    </Suspense>
+  </div>
+</template>
+```
+
+### 2. 記憶化昂貴計算
+```javascript
+import { computed, shallowRef } from 'vue'
+
+/** @type {import('vue').ComputedRef<ProcessedData[]>} */
+const processedData = computed(() => {
+  // 昂貴的計算邏輯
+  return expensiveDataProcessing(rawData.value)
+})
+```
+
+## 測試友好的元件設計
+
+### 1. 測試識別符
+```vue
+<template>
+  <div class="book-list" data-testid="book-list">
+    <div 
+      v-for="book in books"
+      :key="book.id"
+      :data-testid="`book-item-${book.id}`"
+      class="book-item"
+    >
+      {{ book.title }}
+    </div>
+  </div>
+</template>
+```
+
+### 2. 可測試的方法暴露
+```javascript
+// 暴露給測試的方法
+defineExpose({
+  validateForm,
+  resetForm,
+  isValid
+})
+```
+
+## 範例參考
+
+查看專案中的實際範例：
+- 列表元件：[BookList.vue](mdc:src/views/TanstackView/components/BookList.vue)
+- 表單元件：[BookAddForm.vue](mdc:src/views/TanstackView/components/BookAddForm.vue)  
+- 詳情元件：[BookDetails.vue](mdc:src/views/TanstackView/components/BookDetails.vue)
+- 元件導出：[index.js](mdc:src/views/TanstackView/components/index.js)
+
+## 開發檢查清單
+
+- [ ] 元件職責明確且單一
+- [ ] Props 和 emits 有完整的型別註解
+- [ ] 使用語義化的事件命名
+- [ ] 樣式使用 Tailwind CSS 優先，scoped 樣式做補充
+- [ ] 效能敏感的計算使用 computed
+- [ ] 大型元件考慮拆分或異步載入
+- [ ] 包含必要的測試識別符
+- [ ] 遵循無障礙設計原則

@@ -1,0 +1,225 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 測試模式與策略
+
+參考專案現有的測試設置，基於 [package.json](mdc:package.json) 中的 Vitest + Vue Test Utils 配置。
+
+## 測試架構
+
+### 測試分類
+1. **單元測試**: 測試個別元件和函式
+2. **整合測試**: 測試元件間的互動
+3. **E2E 測試**: 測試完整的使用者流程
+
+### 測試檔案結構
+```
+src/
+├── components/
+│   ├── __tests__/
+│   │   └── HelloWorld.spec.js  # 參考現有範例
+│   └── HelloWorld.vue
+├── views/
+│   └── TanstackView/
+│       ├── __tests__/
+│       └── TanstackView.vue
+```
+
+## Vue 元件測試模式
+
+### 基本元件測試
+```javascript
+import { describe, it, expect } from 'vitest'
+import { mount } from '@vue/test-utils'
+import BookCard from '../BookCard.vue'
+
+describe('BookCard', () => {
+  const mockBook = {
+    id: '1',
+    title: 'Test Book',
+    author: 'Test Author',
+    price: 100
+  }
+
+  it('renders book information correctly', () => {
+    const wrapper = mount(BookCard, {
+      props: { book: mockBook }
+    })
+    
+    expect(wrapper.text()).toContain('Test Book')
+    expect(wrapper.text()).toContain('Test Author')
+  })
+
+  it('emits select event when clicked', async () => {
+    const wrapper = mount(BookCard, {
+      props: { book: mockBook }
+    })
+    
+    await wrapper.find('[data-testid="book-select"]').trigger('click')
+    expect(wrapper.emitted('select')).toBeTruthy()
+  })
+})
+```
+
+### Composition API 測試
+```javascript
+import { ref } from 'vue'
+import { mount } from '@vue/test-utils'
+
+it('tests reactive state changes', async () => {
+  const wrapper = mount(Component)
+  const button = wrapper.find('button')
+  
+  await button.trigger('click')
+  await wrapper.vm.$nextTick()
+  
+  expect(wrapper.text()).toContain('Updated')
+})
+```
+
+## TanStack Query 測試
+
+### Mock Query Client
+```javascript
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
+
+const createWrapper = (component, props = {}) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false }
+    }
+  })
+
+  return mount(component, {
+    props,
+    global: {
+      plugins: [[VueQueryPlugin, { queryClient }]]
+    }
+  })
+}
+```
+
+### 測試查詢 Hook
+```javascript
+import { useBooksQuery } from '../query/query.js'
+
+// Mock API 回應
+vi.mock('../api/types/api.js', () => ({
+  bookApi: {
+    getAll: vi.fn().mockResolvedValue([
+      { id: '1', title: 'Book 1' },
+      { id: '2', title: 'Book 2' }
+    ])
+  }
+}))
+
+it('loads books successfully', async () => {
+  const wrapper = createWrapper(BookList)
+  
+  // 等待查詢完成
+  await waitFor(() => {
+    expect(wrapper.text()).toContain('Book 1')
+  })
+})
+```
+
+## 測試工具與 Mock
+
+### API Mock
+```javascript
+// __tests__/mocks/api.js
+export const mockBookApi = {
+  getAll: vi.fn(),
+  getById: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn()
+}
+```
+
+### 測試資料工廠
+```javascript
+// __tests__/factories/book.js
+export const createMockBook = (overrides = {}) => ({
+  id: '1',
+  title: 'Default Title',
+  author: 'Default Author',
+  price: 100,
+  ...overrides
+})
+```
+
+## 測試最佳實踐
+
+### 1. 測試識別符
+在元件中加入 `data-testid` 屬性：
+```vue
+<template>
+  <div data-testid="book-list">
+    <div 
+      v-for="book in books"
+      :key="book.id"
+      :data-testid="`book-item-${book.id}`"
+    >
+      {{ book.title }}
+    </div>
+  </div>
+</template>
+```
+
+### 2. 非同步測試
+```javascript
+import { waitFor } from '@testing-library/vue'
+
+it('handles async operations', async () => {
+  const wrapper = mount(Component)
+  
+  await waitFor(() => {
+    expect(wrapper.find('[data-testid="result"]').exists()).toBe(true)
+  })
+})
+```
+
+### 3. 表單測試
+```javascript
+it('validates form input', async () => {
+  const wrapper = mount(BookForm)
+  
+  const titleInput = wrapper.find('input[name="title"]')
+  await titleInput.setValue('')
+  await wrapper.find('form').trigger('submit')
+  
+  expect(wrapper.text()).toContain('標題為必填欄位')
+})
+```
+
+## 執行測試
+
+### 測試指令
+```bash
+# 執行所有測試
+pnpm test:unit
+
+# 監視模式
+pnpm test:unit --watch
+
+# 覆蓋率報告
+pnpm test:unit --coverage
+```
+
+### 設定檔案
+參考專案的 [vitest.config.js](mdc:vitest.config.js) 配置。
+
+## CI/CD 整合
+
+### GitHub Actions 範例
+```yaml
+- name: Run tests
+  run: pnpm test:unit --coverage
+  
+- name: Upload coverage
+  uses: codecov/codecov-action@v3
+```

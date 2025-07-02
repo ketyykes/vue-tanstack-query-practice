@@ -1,0 +1,166 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# 效能優化與最佳實踐
+
+## Vue 3 效能優化
+
+### 1. 響應式系統優化
+```javascript
+// ✅ 使用 shallowRef 處理大型物件
+const largeData = shallowRef(expensiveData)
+
+// ✅ 使用 markRaw 標記非響應式資料
+const nonReactiveData = markRaw({ 
+  someLibraryInstance: new SomeLibrary() 
+})
+```
+
+### 2. 計算屬性最佳化
+```javascript
+// ✅ 複雜計算使用計算屬性快取
+const expensiveComputed = computed(() => {
+  return heavyCalculation(data.value)
+})
+
+// ✅ 避免在 template 中直接調用函式
+// ❌ 不好的做法
+// <div>{{ heavyCalculation(item) }}</div>
+
+// ✅ 好的做法
+// const processedItem = computed(() => heavyCalculation(item.value))
+```
+
+### 3. 列表渲染優化
+```vue
+<template>
+  <!-- ✅ 使用穩定的 key -->
+  <div v-for="item in items" :key="item.id">
+    {{ item.name }}
+  </div>
+  
+  <!-- ✅ 大型列表使用虛擬滾動 -->
+  <VirtualList :items="largeList" />
+</template>
+```
+
+## TanStack Query 效能優化
+
+### 1. 適當的 staleTime 設定
+```javascript
+// 參考 [query.js](mdc:src/query/query.js) 的設定
+export const useBooksQuery = () => {
+  return useQuery({
+    queryKey: bookKeys.list(),
+    queryFn: fetchBooks,
+    staleTime: 5 * 60 * 1000, // 5 分鐘
+  })
+}
+```
+
+### 2. 預填充策略
+```javascript
+// 在 hover 時預填充詳情
+const prefetchBook = usePrefetchBook()
+
+const handleMouseEnter = (bookId) => {
+  prefetchBook(bookId)
+}
+```
+
+### 3. 背景重新整理控制
+```javascript
+const { data } = useQuery({
+  queryKey: ['books'],
+  queryFn: fetchBooks,
+  refetchOnWindowFocus: false, // 避免頻繁重新整理
+  refetchOnMount: false,       // 根據需求調整
+})
+```
+
+## 建構優化
+
+### 1. 代碼分割
+```javascript
+// 路由層級代碼分割
+const TanstackView = () => import('../views/TanstackView/TanstackView.vue')
+
+// 元件層級懶載入
+const HeavyComponent = defineAsyncComponent(() =>
+  import('./HeavyComponent.vue')
+)
+```
+
+### 2. 依賴優化
+檢查 [package.json](mdc:package.json) 確保：
+- 移除未使用的依賴
+- 使用 tree-shaking 友好的庫
+- 適當的 bundle 分析
+
+## 開發環境最佳化
+
+### 1. 熱重載優化
+```javascript
+// vite.config.js 優化
+export default {
+  server: {
+    hmr: { overlay: false },
+    host: true,
+  },
+  optimizeDeps: {
+    include: ['vue', '@tanstack/vue-query']
+  }
+}
+```
+
+### 2. ESLint 效能
+確保 [eslint.config.js](mdc:eslint.config.js) 配置合理：
+- 使用適當的 parser options
+- 避免過於嚴格的規則影響開發速度
+
+## 記憶體管理
+
+### 1. 適當清理
+```javascript
+// 在元件卸載時清理
+onUnmounted(() => {
+  // 清理定時器、事件監聽器等
+  clearInterval(timer)
+  window.removeEventListener('resize', handler)
+})
+```
+
+### 2. 避免記憶體洩漏
+```javascript
+// ✅ 使用 WeakMap 避免循環引用
+const weakCache = new WeakMap()
+
+// ✅ 適時解除事件監聽
+const cleanup = () => {
+  element.removeEventListener('click', handler)
+}
+```
+
+## 監控與除錯
+
+### 1. Vue DevTools
+確保開發環境啟用 Vue DevTools
+
+### 2. TanStack Query DevTools
+```javascript
+// [main.js](mdc:src/main.js) 中啟用
+app.use(VueQueryPlugin, {
+  enableDevtools: true
+})
+```
+
+### 3. 效能監控
+```javascript
+// 使用 Performance API
+const start = performance.now()
+heavyOperation()
+const end = performance.now()
+console.log(`操作耗時: ${end - start}ms`)
+```

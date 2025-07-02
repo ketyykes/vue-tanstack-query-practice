@@ -1,0 +1,87 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Cursor Rules 概覽
+
+本專案的 Cursor Rules 提供完整的 Vue 3 + TanStack Query 開發指引。
+
+## 📋 規則檔案導覽
+
+### 核心架構規則
+- **[vue-tanstack-architecture.mdc](mdc:.cursor/rules/vue-tanstack-architecture.mdc)** - 專案架構和技術棧指引
+- **[jsdoc_style.mdc](mdc:.cursor/rules/jsdoc_style.mdc)** - TypeScript 風格 JSDoc 註解規範
+
+### 開發模式規則  
+- **[vue3-composition-patterns.mdc](mdc:.cursor/rules/vue3-composition-patterns.mdc)** - Vue 3 Composition API 開發模式
+- **[tanstack-query-patterns.mdc](mdc:.cursor/rules/tanstack-query-patterns.mdc)** - TanStack Query 最佳實踐
+- **[component-development-guide.mdc](mdc:.cursor/rules/component-development-guide.mdc)** - Vue 元件開發指引
+
+### 品質保證規則
+- **[performance-best-practices.mdc](mdc:.cursor/rules/performance-best-practices.mdc)** - 效能優化最佳實踐
+- **[testing-patterns.mdc](mdc:.cursor/rules/testing-patterns.mdc)** - 測試模式與策略
+
+## 🚀 快速開始指南
+
+### 新功能開發流程
+1. 定義型別在 [api.d.ts](mdc:src/api/types/api.d.ts)
+2. 實作 API 在 [api.js](mdc:src/api/types/api.js)  
+3. 建立 Query hooks 在 [query.js](mdc:src/query/query.js)
+4. 開發 Vue 元件
+5. 撰寫測試
+
+### 檔案結構參考
+```
+src/
+├── api/types/           # API 型別和函式
+├── query/               # TanStack Query hooks
+├── views/               # 頁面元件
+├── components/          # 可重用元件  
+├── stores/              # Pinia 狀態管理
+└── router/              # Vue Router 設定
+```
+
+## 💡 關鍵開發原則
+
+### 狀態管理分離
+- **Server State**: TanStack Query 管理 API 資料
+- **Client State**: Pinia 管理 UI 狀態  
+- **Local State**: Vue ref/reactive 管理元件狀態
+
+### 型別安全
+- 使用 TypeScript 定義檔 + JSDoc 註解
+- 所有 Props 必須有型別標註
+- API 回應必須有對應介面
+
+### 效能優化
+- 適當設定 TanStack Query 的 `staleTime`
+- 使用計算屬性快取昂貴計算
+- 大型元件考慮代碼分割
+
+## 📖 技術棧版本
+
+基於 [package.json](mdc:package.json) 的當前設定：
+- Vue 3.5+ with Composition API
+- TanStack Query 5.x
+- Tailwind CSS 4.x
+- Vite 5.x
+- Vitest 2.x
+
+## 🔍 程式碼範例參考
+
+查看專案中的實際實作：
+- 完整功能展示：[TanstackView.vue](mdc:src/views/TanstackView/TanstackView.vue)
+- Query 管理：[query.js](mdc:src/query/query.js)
+- 元件範例：[components/](mdc:src/views/TanstackView/components)
+- 測試範例：[__tests__/](mdc:src/components/__tests__)
+
+## 🛠️ 開發工具設定
+
+確保已配置：
+- ESLint: [eslint.config.js](mdc:eslint.config.js)
+- Prettier + 相關插件
+- Vue DevTools 
+- TanStack Query DevTools
+
+遵循這些規則將確保程式碼品質、一致性和可維護性。

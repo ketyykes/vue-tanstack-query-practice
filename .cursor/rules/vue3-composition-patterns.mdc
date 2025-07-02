@@ -1,0 +1,248 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Vue 3 Composition API 開發模式
+
+本專案採用 Vue 3 Composition API，遵循現代 Vue 開發最佳實踐。
+
+## 基本 Composition API 模式
+
+### Script Setup 語法
+所有元件使用 `<script setup>` 語法，提供更簡潔的開發體驗：
+
+```vue
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+
+/** @typedef {import('../api/types/api').Book} Book */
+
+// 響應式狀態
+/** @type {import('vue').Ref<Book[]>} */
+const books = ref([])
+
+/** @type {import('vue').Ref<string>} */
+const searchQuery = ref('')
+
+// 計算屬性
+/** @type {import('vue').ComputedRef<Book[]>} */
+const filteredBooks = computed(() => {
+  return books.value.filter(book => 
+    book.title.includes(searchQuery.value)
+  )
+})
+
+// 生命週期
+onMounted(() => {
+  // 初始化邏輯
+})
+</script>
+```
+
+### 響應式系統最佳實踐
+
+#### 1. ref vs reactive 選擇
+- **ref**: 用於基本型別和單一值
+- **reactive**: 用於物件和陣列（但要小心解構）
+
+```javascript
+// ✅ 推薦
+const count = ref(0)
+const user = ref({ name: 'John', age: 30 })
+
+// ⚠️ 小心使用，避免解構
+const state = reactive({ count: 0, user: null })
+```
+
+#### 2. 計算屬性設計
+```javascript
+// ✅ 簡單的衍生狀態
+const fullName = computed(() => `${firstName.value} ${lastName.value}`)
+
+// ✅ 複雜的過濾邏輯
+const filteredBooks = computed(() => {
+  if (!searchQuery.value) return books.value
+  return books.value.filter(book => 
+    book.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+```
+
+#### 3. 監聽器使用
+```javascript
+// ✅ 監聽單一來源
+watch(searchQuery, (newQuery) => {
+  console.log('搜尋查詢變更:', newQuery)
+})
+
+// ✅ 監聽多個來源
+watchEffect(() => {
+  if (user.value && books.value.length > 0) {
+    updateRecommendations()
+  }
+})
+```
+
+## Composables 設計模式
+
+### 自訂 Composable 結構
+```javascript
+// composables/useBookManagement.js
+import { ref, computed } from 'vue'
+
+/**
+ * 書籍管理 composable
+ * @returns {{
+ *   books: import('vue').Ref<Book[]>,
+ *   addBook: (book: Book) => void,
+ *   removeBook: (id: string) => void,
+ *   bookCount: import('vue').ComputedRef<number>
+ * }}
+ */
+export function useBookManagement() {
+  const books = ref([])
+  
+  const addBook = (book) => {
+    books.value.push(book)
+  }
+  
+  const removeBook = (id) => {
+    const index = books.value.findIndex(book => book.id === id)
+    if (index > -1) {
+      books.value.splice(index, 1)
+    }
+  }
+  
+  const bookCount = computed(() => books.value.length)
+  
+  return {
+    books: readonly(books), // 防止外部直接修改
+    addBook,
+    removeBook,
+    bookCount,
+  }
+}
+```
+
+### 與 TanStack Query 整合的 Composable
+```javascript
+// composables/useBookWithQuery.js
+import { computed } from 'vue'
+import { useBookQuery } from '../query/query.js'
+
+/**
+ * 整合 TanStack Query 的書籍 composable
+ * @param {import('vue').Ref<string>} bookId
+ */
+export function useBookWithQuery(bookId) {
+  const { data: book, isLoading, error } = useBookQuery(bookId)
+  
+  const bookTitle = computed(() => book.value?.title || '載入中...')
+  const hasError = computed(() => !!error.value)
+  
+  return {
+    book,
+    bookTitle,
+    isLoading,
+    hasError,
+    error,
+  }
+}
+```
+
+## 元件間通訊模式
+
+### 1. Props 和 Emits
+```vue
+<script setup>
+/** @typedef {import('../api/types/api').Book} Book */
+
+// Props 定義
+const props = defineProps({
+  /** @type {import('vue').PropType<Book>} */
+  book: { type: Object, required: true },
+  isSelected: { type: Boolean, default: false },
+})
+
+// Emits 定義
+const emit = defineEmits(['select', 'delete'])
+
+/** @type {() => void} */
+const handleSelect = () => {
+  emit('select', props.book)
+}
+
+/** @type {() => void} */  
+const handleDelete = () => {
+  emit('delete', props.book.id)
+}
+</script>
+```
+
+### 2. Provide/Inject 模式
+```javascript
+// 父元件 - Provide
+import { provide, ref } from 'vue'
+
+const selectedBookId = ref(null)
+provide('selectedBookId', selectedBookId)
+
+// 子元件 - Inject
+import { inject } from 'vue'
+
+const selectedBookId = inject('selectedBookId')
+```
+
+### 3. 狀態提升模式
+將共享狀態提升到共同的父元件或使用 Pinia store。
+
+## 效能最佳化
+
+### 1. 計算屬性快取
+```javascript
+// ✅ 自動快取，只在依賴變更時重新計算
+const expensiveValue = computed(() => {
+  return heavyComputation(data.value)
+})
+```
+
+### 2. 條件性渲染優化
+```vue
+<template>
+  <!-- ✅ 使用 v-show 適合頻繁切換 -->
+  <div v-show="isVisible">內容</div>
+  
+  <!-- ✅ 使用 v-if 適合條件性渲染 -->
+  <div v-if="shouldRender">內容</div>
+</template>
+```
+
+### 3. 列表渲染優化
+```vue
+<template>
+  <!-- ✅ 提供穩定的 key -->
+  <div
+    v-for="book in books"
+    :key="book.id"
+    class="book-item"
+  >
+    {{ book.title }}
+  </div>
+</template>
+```
+
+## 常見模式範例
+
+參考專案中的實作範例：
+- 主要功能展示：[TanstackView.vue](mdc:src/views/TanstackView/TanstackView.vue)
+- 元件組織：[components/index.js](mdc:src/views/TanstackView/components/index.js)
+- 表單處理：[BookAddForm.vue](mdc:src/views/TanstackView/components/BookAddForm.vue)
+
+## 開發建議
+
+1. **保持元件職責單一**：每個元件只負責一個明確的功能
+2. **適當抽象 composables**：將複雜邏輯抽取到可重用的 composables
+3. **型別安全**：搭配 JSDoc 確保型別安全
+4. **效能考量**：避免不必要的響應式包裝和計算
+5. **可測試性**：設計時考慮單元測試的便利性

@@ -1,0 +1,167 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# TanStack Query 使用模式與最佳實踐
+
+本專案遵循 TkDodo 的 TanStack Query 最佳實踐，確保高效的資料管理和快取策略。
+
+## Query Keys 管理
+
+使用工廠函式統一管理 query keys，參考 [query.js](mdc:src/query/query.js) 中的 `bookKeys` 實作：
+
+```javascript
+export const bookKeys = {
+  all: ['books'],
+  lists: () => [...bookKeys.all, 'list'],
+  list: (filters) => [...bookKeys.lists(), { filters }],
+  details: () => [...bookKeys.all, 'detail'],
+  detail: (id) => [...bookKeys.details(), id],
+}
+```
+
+### Key 設計原則
+- 從最通用到最具體的層級結構
+- 支援靈活的快取操作（invalidation、prefetch）
+- 避免手動宣告錯誤，方便維護
+
+## Query Hooks 模式
+
+### 基本查詢 Hook
+```javascript
+/** @type {(id: import('vue').Ref<number | null>) => UseQueryReturnType<Book, Error>} */
+export const useBookQuery = (id, enabled) => {
+  return useQuery({
+    queryKey: computed(() => bookKeys.detail(id.value)),
+    queryFn: () => bookApi.getById(id.value),
+    enabled: enabled || computed(() => !!id.value),
+    staleTime: 5 * 60 * 1000, // 5 分鐘
+  })
+}
+```
+
+### 關鍵設定說明
+- **queryKey**: 使用 `computed()` 確保響應式更新
+- **enabled**: 控制查詢何時執行，避免不必要的請求
+- **staleTime**: 設定合理的資料新鮮度時間
+- **select**: 用於資料轉換和最佳化
+
+## Mutation Hooks 模式
+
+### 標準 Mutation Hook
+```javascript
+export const useCreateBookMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (bookData) => bookApi.create(bookData),
+    onSuccess: () => {
+      // 使相關查詢失效
+      queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+    },
+    onError: (error) => {
+      console.error('操作失敗：', error)
+    },
+  })
+}
+```
+
+### 快取更新策略
+1. **樂觀更新**: 適用於高機率成功的操作
+2. **失效重新獲取**: 適用於複雜的資料關係（推薦）
+3. **手動更新**: 適用於精確控制的場景
+
+## 效能優化技巧
+
+### 1. 預填充 (Prefetching)
+```javascript
+export const usePrefetchBook = () => {
+  const queryClient = useQueryClient()
+  
+  return (id) => {
+    queryClient.prefetchQuery({
+      queryKey: bookKeys.detail(id),
+      queryFn: () => bookApi.getById(id),
+      staleTime: 5 * 60 * 1000,
+    })
+  }
+}
+```
+
+### 2. 背景重新獲取
+```javascript
+const { data } = useQuery({
+  queryKey: bookKeys.list(),
+  queryFn: fetchBooks,
+  staleTime: 5 * 60 * 1000,
+  refetchOnWindowFocus: false, // 根據需求調整
+})
+```
+
+### 3. 並行查詢
+```javascript
+// 在元件中同時執行多個查詢
+const { data: books } = useBooksQuery()
+const { data: categories } = useCategoriesQuery()
+const { data: authors } = useAuthorsQuery()
+```
+
+## 錯誤處理模式
+
+### 1. 全域錯誤邊界
+在 [main.js](mdc:src/main.js) 中設定全域錯誤處理：
+
+```javascript
+app.use(VueQueryPlugin, {
+  queryClientConfig: {
+    defaultOptions: {
+      queries: {
+        retry: (failureCount, error) => {
+          if (error.status === 404) return false
+          return failureCount < 3
+        },
+        staleTime: 5 * 60 * 1000,
+      },
+    },
+  },
+})
+```
+
+### 2. 元件層級錯誤處理
+```javascript
+const { data, error, isError } = useBooksQuery()
+
+// 在 template 中處理錯誤
+if (isError.value) {
+  console.error('載入書籍失敗：', error.value)
+}
+```
+
+## 開發除錯
+
+### 1. 啟用 DevTools
+```javascript
+import { VueQueryPlugin } from '@tanstack/vue-query'
+
+app.use(VueQueryPlugin, {
+  enableDevtools: process.env.NODE_ENV === 'development',
+})
+```
+
+### 2. 查詢狀態監控
+使用 `isLoading`, `isFetching`, `isError` 等狀態提供更好的使用者體驗。
+
+## 常見反模式避免
+
+❌ **不要**:
+- 在 query key 中使用不穩定的物件參考
+- 忽略 enabled 選項，造成不必要的請求
+- 過度使用樂觀更新
+- 忘記處理載入和錯誤狀態
+
+✅ **應該**:
+- 使用 computed() 包裝響應式 query key
+- 適當設定 staleTime 減少重複請求
+- 使用 prefetch 改善使用者體驗
+- 遵循統一的錯誤處理模式

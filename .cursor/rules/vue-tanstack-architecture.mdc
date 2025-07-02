@@ -1,0 +1,78 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Vue + TanStack Query 專案架構指引
+
+本專案採用 Vue 3 + TanStack Query 架構，遵循現代前端開發最佳實踐。
+
+## 技術棧概覽
+
+- **前端框架**: Vue 3 + Composition API
+- **狀態管理**: TanStack Query (server state) + Pinia (client state)
+- **樣式框架**: Tailwind CSS 4.x
+- **路由**: Vue Router 4
+- **HTTP 客戶端**: Axios
+- **建構工具**: Vite
+- **測試框架**: Vitest + Vue Test Utils
+- **型別系統**: TypeScript 定義檔 + JSDoc 註解
+
+## 目錄結構原則
+
+```
+src/
+├── api/                    # API 相關
+│   ├── types/             # 型別定義和 API 函式
+│   │   ├── api.d.ts      # TypeScript 型別定義
+│   │   └── api.js        # API 函式實作
+├── components/            # 可重用元件
+├── views/                 # 頁面元件
+│   └── ViewName/         # 每個視圖有自己的目錄
+│       ├── ViewName.vue  # 主要視圖元件
+│       └── components/   # 視圖專用元件
+├── query/                # TanStack Query 相關
+│   └── query.js         # Query hooks 和 keys 管理
+├── stores/               # Pinia 狀態管理
+├── router/               # 路由設定
+└── style/                # 全域樣式
+```
+
+## 核心架構原則
+
+### 1. 狀態管理分離
+- **Server State**: 使用 TanStack Query 管理從 API 獲取的資料
+- **Client State**: 使用 Pinia 管理本地 UI 狀態
+- **Local Component State**: 使用 Vue 的 `ref`/`reactive` 管理元件內部狀態
+
+### 2. API 層設計
+- 型別定義集中在 [api.d.ts](mdc:src/api/types/api.d.ts)
+- API 函式實作在 [api.js](mdc:src/api/types/api.js)
+- 所有 API 回應必須有對應的 TypeScript 介面
+
+### 3. Query Management
+- 遵循 TkDodo 的 TanStack Query 最佳實踐
+- Query Keys 使用工廠函式統一管理（參考 [query.js](mdc:src/query/query.js)）
+- 適當設定 `staleTime` 和快取策略
+
+### 4. 元件組織
+- 頁面層級元件放在 `views/` 目錄
+- 可重用元件放在 `components/` 目錄  
+- 視圖專用元件放在對應視圖的 `components/` 子目錄
+
+## 檔案命名規範
+
+- **Vue 元件**: PascalCase (例: `BookList.vue`)
+- **JavaScript 檔案**: camelCase (例: `bookApi.js`)
+- **型別定義檔**: kebab-case + .d.ts (例: `api.d.ts`)
+- **目錄名稱**: PascalCase for 元件目錄, camelCase for 功能目錄
+
+## 新功能開發流程
+
+1. **定義型別**: 在 `api.d.ts` 中定義資料結構
+2. **建立 API**: 在 `api.js` 中實作 API 函式
+3. **建立 Query**: 在 `query.js` 中建立對應的 hooks
+4. **開發元件**: 建立對應的 Vue 元件
+5. **設定路由**: 如需要，在 router 中新增路由
+
+參考範例：[TanstackView.vue](mdc:src/views/TanstackView/TanstackView.vue) 展示了完整的功能實作模式。
