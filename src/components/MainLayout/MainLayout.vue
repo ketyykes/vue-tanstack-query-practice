@@ -1,14 +1,18 @@
 <script setup>
 import { useRoute } from 'vue-router'
 
+import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
+
 /**
  * 判斷當前路徑是否為指定路徑
+ *
  * @type {(path: string) => boolean}
  */
 const route = useRoute()
 const isActive = (path) => route.path === path
 </script>
 <template>
+  <VueQueryDevtools />
   <div class="flex min-h-screen flex-col bg-gray-50">
     <!-- Header with Navigation -->
     <header class="border-b border-gray-200 bg-white shadow-sm">
