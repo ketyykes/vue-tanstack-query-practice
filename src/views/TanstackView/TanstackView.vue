@@ -15,7 +15,7 @@ import { BookDetailPanel, BookList, SearchFilter } from './components'
 // 本地狀態管理 - 遵循 tkdodo 的建議，保持 server state 和 client state 分離
 const searchFilter = ref('')
 
-/** @type {import('vue').Ref<number | null>} */
+/** @type {import('vue').Ref<string | null>} */
 const selectedBookId = ref(null)
 
 /** @type {import('vue').Ref<Book | null>} */
@@ -36,8 +36,10 @@ const { data: selectedBook, isLoading: bookLoading } = useBookQuery(
   computed(() => !!selectedBookId.value),
 )
 
-const deleteBookMutation = useDeleteBookMutation()
-const updateBookMutation = useUpdateBookMutation()
+const { isPending: isDeletePending, mutateAsync: deleteBookMutation } =
+  useDeleteBookMutation()
+const { isPending: isUpdatePending, mutateAsync: updateBookMutation } =
+  useUpdateBookMutation()
 const prefetchBookFn = usePrefetchBook()
 
 // 處理書籍刪除
@@ -49,7 +51,7 @@ const prefetchBookFn = usePrefetchBook()
 const handleDeleteBook = async (id) => {
   if (window.confirm('確定要刪除這本書嗎？')) {
     try {
-      await deleteBookMutation.mutateAsync(id)
+      await deleteBookMutation(id)
       if (selectedBookId.value === id) {
         selectedBookId.value = null
       }
@@ -89,7 +91,7 @@ const handleUpdateBook = async () => {
   if (!editingBook.value) return
 
   try {
-    await updateBookMutation.mutateAsync({
+    await updateBookMutation({
       id: editingBook.value.id,
       data: editForm.value,
     })
@@ -118,12 +120,15 @@ const handleBookHover = (id) => {
   prefetchBookFn(id)
 }
 
+/** @type {(book: Book) => void} */
 const onSelectBook = (book) => {
-  selectedBookId.value = book.id
+  console.log('book', book)
+  selectedBookId.value = String(book.id)
 }
 </script>
 
 <template>
+  {{ console.log('isUpdatePending', isUpdatePending) }}
   <div v-if="booksError" class="text-center text-red-500">
     載入書籍時發生錯誤：{{ booksError.message }}
   </div>
@@ -137,8 +142,8 @@ const onSelectBook = (book) => {
       <BookList
         :books="books"
         :isLoading="booksLoading"
-        :isDeletePending="deleteBookMutation.isPending"
-        :isUpdatePending="updateBookMutation.isPending"
+        :isDeletePending="isDeletePending"
+        :isUpdatePending="isUpdatePending"
         :selectedBookId="selectedBookId"
         @selectBook="onSelectBook"
         @editBook="handleEditBook"

@@ -7,8 +7,8 @@ defineProps({
   /** @type {import('vue').PropType<Book[]>} */
   books: { type: Array, default: () => [] },
   isLoading: { type: Boolean, default: false },
-  selectedBookId: { type: Number, default: null },
-  deletingBookId: { type: Number, default: null },
+  selectedBookId: { type: String, default: null },
+  isDeletePending: { type: Boolean, default: false },
   isUpdatePending: { type: Boolean, default: false },
 })
 
@@ -47,7 +47,6 @@ const onSelectBook = (book) => {
 </script>
 
 <template>
-  {{ console.log(selectedBookId) }}
   <div>
     <h2 class="mb-3 text-xl font-semibold">書籍列表</h2>
     <div v-if="isLoading">載入中...</div>
@@ -61,7 +60,7 @@ const onSelectBook = (book) => {
           :key="book.id"
           :book="book"
           :isSelected="selectedBookId === book.id"
-          :isDeletePending="deletingBookId === book.id"
+          :isDeletePending="isDeletePending"
           :isUpdatePending="isUpdatePending"
           @selectBook="onSelectBook"
           @edit="onEditBook"

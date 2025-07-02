@@ -5,8 +5,8 @@ import BookEditForm from './BookEditForm.vue'
 /** @typedef {import('../../../api/types/api').Book} Book */
 
 defineProps({
-  /** @type {import('vue').PropType<number | null>} */
-  selectedBookId: { type: Number, default: null },
+  /** @type {import('vue').PropType<string | null>} */
+  selectedBookId: { type: String, default: null },
   /** @type {import('vue').PropType<Book | undefined>} */
   selectedBook: { type: Object, default: undefined },
   /** @type {import('vue').PropType<boolean>} */

@@ -3,11 +3,11 @@ description:
 globs: 
 alwaysApply: true
 ---
+
 # Cursor Rules：使用 TypeScript 風格撰寫 JSDoc
 
 > **目的**：當 LLM 產生 JavaScript／Vue 程式碼時，必須依循本檔規範，以 TypeScript 風格的 JSDoc 標註完整型別，確保 IntelliSense 與型別安全。
 
----
 
 ## 1. 基本原則
 
@@ -26,7 +26,6 @@ alwaysApply: true
    * 變數／函式：使用 `camelCase`。
    * 列舉：使用全大寫 `SCREAMING_SNAKE_CASE` 或 `PascalCase` 依實務需求。
 
----
 
 ## 2. 常用範例
 
@@ -113,15 +112,12 @@ const props = defineProps({
 </script>
 ```
 
----
 
 ## 3. 何時撰寫型別
 
 1. **複雜資料結構**：具有巢狀屬性或跨檔案重用時。
 2. **API 請求／回應**：欄位眾多且易出錯時。
 3. **函式介面**：工具函式或封裝函式需明確對外契約。
-
----
 
 ## 4. 進階範例
 
@@ -166,8 +162,6 @@ export type DeleteAnimalResponse = import('axios').AxiosResponse<DeleteAnimalSuc
 /** @type {(payload: CreateAnimalPayload) => Promise<import('axios').AxiosResponse<Animal>>} */
 const createAnimal = async (payload) => axios.post('/api/animals', payload)
 ```
-
----
 
 ## 5. LLM 生成指引 Checklist
 
