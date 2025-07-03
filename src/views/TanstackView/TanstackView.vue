@@ -1,5 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
+
+import { useQueryClient } from '@tanstack/vue-query'
 
 import {
   useBookQuery,
@@ -16,6 +18,8 @@ import {
   SearchFilter,
 } from './components'
 
+const queryClient = useQueryClient()
+
 /** @typedef {import('../../api/types/api').Book} Book */
 
 // 本地狀態管理 - 遵循 tkdodo 的建議，保持 server state 和 client state 分離
@@ -26,6 +30,8 @@ const selectedBookId = ref(null)
 
 /** @type {import('vue').Ref<Book | null>} */
 const editingBook = ref(null)
+
+const searchQuery = ref('')
 
 /** @type {import('vue').Ref<Partial<Book>>} */
 const editForm = ref({})
@@ -60,12 +66,10 @@ const {
   data: books = [],
   isLoading: booksLoading,
   error: booksError,
-} = useBooksQuery(searchFilter.value)
+} = useBooksQuery(searchQuery)
 
-const { data: selectedBook, isLoading: bookLoading } = useBookQuery(
-  selectedBookId,
-  computed(() => !!selectedBookId.value),
-)
+const { data: selectedBook, isLoading: bookLoading } =
+  useBookQuery(selectedBookId)
 
 const { isPending: isDeletePending, mutateAsync: deleteBookMutation } =
   useDeleteBookMutation()
@@ -155,7 +159,6 @@ const handleBookHover = (book) => {
 
 /** @type {(book: Book) => void} */
 const onSelectBook = (book) => {
-  console.log('book', book)
   selectedBookId.value = String(book.id)
 }
 
@@ -252,10 +255,38 @@ const handleCreateBook = async () => {
     alert('新增失敗，請稍後再試')
   }
 }
+
+/**
+ * 處理搜尋
+ *
+ * @type {(query: string) => void}
+ */
+const handleSearch = (query) => {
+  searchQuery.value = query
+}
+
+const getCacheKeys = () => {
+  console.log(
+    'queryClient.getQueryCache().getAll()',
+    queryClient.getQueryCache().getAll(),
+  )
+  console.log(
+    'queryClient.getQueryCache().getAll().map(q=>q.queryKey)',
+    queryClient
+      .getQueryCache()
+      .getAll()
+      .map((q) => q.queryKey),
+  )
+}
 </script>
 
 <template>
-  {{ console.log('isUpdatePending', isUpdatePending) }}
+  <button
+    @click="getCacheKeys"
+    class="mb-5 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+  >
+    getCacheKeys
+  </button>
   <div v-if="booksError" class="text-center text-red-500">
     載入書籍時發生錯誤：{{ booksError.message }}
   </div>
@@ -263,7 +294,7 @@ const handleCreateBook = async () => {
     <h1 class="text-3xl font-bold">Vue Query 書籍管理範例</h1>
     <p class="mb-5 text-gray-600">遵循 tkdodo 最佳實踐的 Vue Query 實作範例</p>
 
-    <SearchFilter v-model="searchFilter" />
+    <SearchFilter v-model="searchFilter" @search="handleSearch" />
 
     <!-- 新增書籍按鈕 -->
     <div class="mb-5">

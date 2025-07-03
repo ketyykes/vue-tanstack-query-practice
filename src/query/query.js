@@ -1,8 +1,7 @@
 import { computed } from 'vue'
 
+import { bookApi } from '@/api/api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
-
-import { bookApi } from '../api/types/api.js'
 
 /** @typedef {import('../api/types/api').Book} Book */
 
@@ -27,7 +26,7 @@ export const bookKeys = {
   lists: () => [...bookKeys.all, 'list'],
   list: (filters) => [...bookKeys.lists(), { filters }],
   details: () => [...bookKeys.all, 'detail'],
-  detail: (id) => [...bookKeys.details(), id],
+  detail: (/** @type {string} */ id) => [...bookKeys.details(), id],
 }
 
 /**
@@ -36,15 +35,15 @@ export const bookKeys = {
  * 查詢書籍列表，支援搜尋過濾
  *
  * @type {(
- *   queryString?: string,
+ *   queryString?: import('vue').Ref<string>,
  * ) => import('@tanstack/vue-query').UseQueryReturnType<Book[], Error>}
  */
 export const useBooksQuery = (queryString) => {
   return useQuery({
-    queryKey: computed(() => bookKeys.list(queryString || '')),
+    queryKey: computed(() => bookKeys.list(queryString?.value || '')),
     queryFn: () =>
       bookApi.getAll(
-        queryString?.value ? `title_like=${queryString}` : undefined,
+        queryString?.value ? `title_like=${queryString.value}` : undefined,
       ),
     // 根據 tkdodo 建議，設定合理的 staleTime
     staleTime: 5 * 60 * 1000, // 5 分鐘
@@ -58,16 +57,30 @@ export const useBooksQuery = (queryString) => {
  * 查詢單一書籍詳情，可控制是否啟用
  *
  * @type {(
- *   id: import('vue').Ref<number | null>,
- *   enabled?: import('vue').ComputedRef<boolean>,
+ *   id: import('vue').Ref<string | number | null>,
+ *   enabled?: import('vue').ComputedRef<boolean> | boolean,
  * ) => import('@tanstack/vue-query').UseQueryReturnType<Book, Error>}
  */
 export const useBookQuery = (id, enabled) => {
   return useQuery({
-    queryKey: computed(() => bookKeys.detail(id.value)),
-    queryFn: () => bookApi.getById(id.value),
+    // 使用 computed 讓 queryKey 響應 id 的變化
+    queryKey: computed(() => {
+      const idValue = id?.value
+      console.log('idValue', bookKeys.detail(idValue ? String(idValue) : ''))
+      return bookKeys.detail(idValue ? String(idValue) : '')
+    }),
+    // queryFn 會在 queryKey 變化時自動重新執行
+    queryFn: () => {
+      const idValue = id?.value
+      return bookApi.getById(Number(idValue))
+    },
     // 利用 enabled 選項控制何時執行查詢 - tkdodo 推薦的強大功能
-    enabled: enabled || computed(() => !!id.value),
+    enabled:
+      enabled ||
+      computed(() => {
+        const hasValidId = !!id?.value
+        return hasValidId
+      }),
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -117,7 +130,7 @@ export const useUpdateBookMutation = () => {
   return useMutation({
     mutationFn: ({ id, data }) => bookApi.update(id, data),
     onSuccess: (_, { id }) => {
-      // 使特定書籍和列表查詢失效
+      // 使特定書籍和列表查詢的快取失效
       queryClient.invalidateQueries({ queryKey: bookKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
     },
