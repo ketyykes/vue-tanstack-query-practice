@@ -4,6 +4,9 @@ import { bookApi } from '@/api/api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 
 /** @typedef {import('../api/types/api').Book} Book */
+/** @typedef {import('@tanstack/vue-query').UseMutationOptions} UseMutationOptions */
+/** @typedef {import('@tanstack/vue-query').QueryClient} QueryClient */
+/** @typedef {import('@tanstack/vue-query').UseQueryOptions} UseQueryOptions */
 
 /**
  * 查詢金鑰工廠函式 - 遵循 tkdodo 的最佳實踐統一管理 query keys
@@ -11,7 +14,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
  * 結構設計原則：
  *
  * 1. 從最通用到最具體的層級結構（['books'] -> ['books', 'list'] -> ['books', 'list', {filters}]）
- * 2. 每個層級都可獨立存取，支援靈活的快取操作（invalidation、prefetch 等）
+ * 2. 每個層級都可獨立存取，支援靈活的快取操作（invalidation、prefetch 等）`
  * 3. 避免手動宣告 key 時的錯誤，讓未來變更更容易維護
  * 4. 支援 Query Filters 的模糊匹配，方便批次操作快取
  *
@@ -30,25 +33,30 @@ export const bookKeys = {
 }
 
 /**
- * 取得所有書籍的 hook
+ * 取得所有書籍的 hook 或 查詢書籍列表，支援搜尋過濾
  *
- * 查詢書籍列表，支援搜尋過濾
- *
- * @type {(
- *   queryString?: import('vue').Ref<string>,
- * ) => import('@tanstack/vue-query').UseQueryReturnType<Book[], Error>}
+ * @param {import('vue').Ref<string>} queryString
+ * @param {UseQueryOptions} useQueryOptions
  */
-export const useBooksQuery = (queryString) => {
-  return useQuery({
-    queryKey: computed(() => bookKeys.list(queryString?.value || '')),
-    queryFn: () =>
-      bookApi.getAll(
-        queryString?.value ? `title_like=${queryString.value}` : undefined,
-      ),
-    // 根據 tkdodo 建議，設定合理的 staleTime
-    staleTime: 5 * 60 * 1000, // 5 分鐘
-    select: (data) => data || [],
-  })
+export const useBooksQuery = (
+  queryString,
+  useQueryOptions = {},
+  useQueryClientOption = null,
+) => {
+  return useQuery(
+    {
+      queryKey: computed(() => bookKeys.list(queryString?.value || '')),
+      queryFn: () =>
+        bookApi.getAll(
+          queryString?.value ? `title_like=${queryString.value}` : undefined,
+        ),
+      // 根據 tkdodo 建議，設定合理的 staleTime
+      staleTime: 5 * 60 * 1000, // 5 分鐘
+      select: (data) => data || [],
+      ...useQueryOptions,
+    },
+    useQueryClientOption,
+  )
 }
 
 /**
@@ -56,121 +64,126 @@ export const useBooksQuery = (queryString) => {
  *
  * 查詢單一書籍詳情，可控制是否啟用
  *
- * @type {(
- *   id: import('vue').Ref<string | number | null>,
- *   enabled?: import('vue').ComputedRef<boolean> | boolean,
- * ) => import('@tanstack/vue-query').UseQueryReturnType<Book, Error>}
+ * @param {import('vue').Ref<string | number | null>} id
+ * @param {boolean} enabled
+ * @param {UseQueryOptions} useQueryOptions
+ * @param {QueryClient} useQueryClientOption
  */
-export const useBookQuery = (id, enabled) => {
-  return useQuery({
-    // 使用 computed 讓 queryKey 響應 id 的變化
-    queryKey: computed(() =>
-      bookKeys.detail(id?.value ? String(id.value) : ''),
-    ),
-    // queryFn 會在 queryKey 變化時自動重新執行
-    queryFn: () => {
-      return bookApi.getById(id?.value)
+export const useBookQuery = (
+  id,
+  enabled,
+  useQueryOptions = {},
+  useQueryClientOption = null,
+) => {
+  return useQuery(
+    {
+      // 使用 computed 讓 queryKey 響應 id 的變化
+      queryKey: computed(() =>
+        bookKeys.detail(id?.value ? String(id.value) : ''),
+      ),
+      // queryFn 會在 queryKey 變化時自動重新執行
+      queryFn: () => {
+        return bookApi.getById(id?.value)
+      },
+      // 利用 enabled 選項控制何時執行查詢 - tkdodo 推薦的強大功能
+      enabled: enabled || computed(() => !!id?.value),
+      ...useQueryOptions,
     },
-    // 利用 enabled 選項控制何時執行查詢 - tkdodo 推薦的強大功能
-    enabled: enabled || computed(() => !!id?.value),
-    staleTime: 5 * 60 * 1000,
-  })
+    useQueryClientOption,
+  )
 }
 
 /**
- * 新增書籍的 mutation hook
+ * 新增書籍的 mutation hook 新增書籍並自動更新相關快取
  *
- * 新增書籍並自動更新相關快取
- *
- * @type {() => import('@tanstack/vue-query').UseMutationReturnType<
- *   Book,
- *   Error,
- *   Omit<Book, 'id'>,
- *   unknown
- * >}
+ * @param {UseMutationOptions} useMutationOptions
+ * @param {QueryClient} queryClientOption
  */
-export const useCreateBookMutation = () => {
+export const useCreateBookMutation = (
+  useMutationOptions = {},
+  queryClientOption = null,
+) => {
   const queryClient = useQueryClient()
 
-  return useMutation({
-    mutationFn: (bookData) => bookApi.create(bookData),
-    onSuccess: () => {
-      // 成功後使所有書籍列表失效 - 遵循 tkdodo 的快取更新策略
-      queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+  return useMutation(
+    {
+      mutationFn: (bookData) => bookApi.create(bookData),
+      onSuccess: () => {
+        // 成功後使所有書籍列表失效 - 遵循 tkdodo 的快取更新策略
+        queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+      },
+      onError: (error) => {
+        console.error('新增書籍失敗：', error)
+      },
+      ...useMutationOptions,
     },
-    onError: (error) => {
-      console.error('新增書籍失敗：', error)
-    },
-  })
+    queryClientOption,
+  )
 }
 
 /**
- * 更新書籍的 mutation hook
+ * 更新書籍的 mutation hook 更新書籍並自動更新相關快取
  *
- * 更新書籍並自動更新相關快取
- *
- * @type {() => import('@tanstack/vue-query').UseMutationReturnType<
- *   Book,
- *   Error,
- *   { id: number; data: Partial<Book> },
- *   unknown
- * >}
+ * @param {UseMutationOptions} useMutationOptions
+ * @param {QueryClient} queryClientOption
  */
-export const useUpdateBookMutation = () => {
+export const useUpdateBookMutation = (
+  useMutationOptions = {},
+  queryClientOption = null,
+) => {
   const queryClient = useQueryClient()
 
-  return useMutation({
-    mutationFn: ({ id, data }) => bookApi.update(id, data),
-    onSuccess: (_, { id }) => {
-      // 使特定書籍和列表查詢的快取失效
-      queryClient.invalidateQueries({ queryKey: bookKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+  return useMutation(
+    {
+      mutationFn: ({ id, data }) => bookApi.update(id, data),
+      onSuccess: (_, { id }) => {
+        // 使特定書籍和列表查詢的快取失效
+        queryClient.invalidateQueries({ queryKey: bookKeys.detail(id) })
+        queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+      },
+      onError: (error) => {
+        console.error('更新書籍失敗：', error)
+      },
+      ...useMutationOptions,
     },
-    onError: (error) => {
-      console.error('更新書籍失敗：', error)
-    },
-  })
+    queryClientOption,
+  )
 }
 
 /**
- * 刪除書籍的 mutation hook
+ * 刪除書籍的 mutation hook 並且自動更新相關快取
  *
- * 刪除書籍並自動更新相關快取
- *
- * @type {() => import('@tanstack/vue-query').UseMutationReturnType<
- *   void,
- *   Error,
- *   number,
- *   unknown
- * >}
+ * @param {UseMutationOptions} useMutationOptions
+ * @param {QueryClient} queryClientOption
  */
-export const useDeleteBookMutation = () => {
+export const useDeleteBookMutation = (
+  useMutationOptions = {},
+  queryClientOption = null,
+) => {
   const queryClient = useQueryClient()
 
-  return useMutation({
-    mutationFn: (id) => bookApi.delete(id),
-    onSuccess: (_, id) => {
-      // 移除特定書籍快取並使列表失效
-      queryClient.removeQueries({ queryKey: bookKeys.detail(id) })
-      queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+  return useMutation(
+    {
+      mutationFn: (id) => bookApi.delete(id),
+      onSuccess: (_, id) => {
+        // 移除特定書籍快取並使列表失效
+        queryClient.removeQueries({ queryKey: bookKeys.detail(id) })
+        queryClient.invalidateQueries({ queryKey: bookKeys.lists() })
+      },
+      onError: (error) => {
+        console.error('刪除書籍失敗：', error)
+      },
+      ...useMutationOptions,
     },
-    onError: (error) => {
-      console.error('刪除書籍失敗：', error)
-    },
-  })
+    queryClientOption,
+  )
 }
 
-/**
- * 預填充書籍詳情的工具函式 - 靈感來自 tkdodo 的快取優化策略
- *
- * 預先載入書籍詳情以優化使用者體驗
- *
- * @type {() => (id: number) => void}
- */
+/** Prefetch 書籍詳情的工具函式 - 來自 tkdodo 的快取優化策略 預先載入書籍詳情以優化使用者體驗 */
 export const usePrefetchBook = () => {
   const queryClient = useQueryClient()
 
-  return (id) => {
+  return (/** @type {number | string} */ id) => {
     queryClient.prefetchQuery({
       queryKey: bookKeys.detail(id),
       queryFn: () => bookApi.getById(id),
