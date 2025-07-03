@@ -1,87 +1,201 @@
-# Vue 3 + Vite 專案模板
+# Vue 3 + TanStack Query 書籍管理系統
 
-這是一個使用 Vue 3 和 Vite 建立的專案模板，整合了多項現代前端開發工具。
+這是一個使用 Vue 3 和 TanStack Query 建立的書籍管理系統練習專案，展示了現代化的前端狀態管理和 API 資料處理技術。
 
-## Tech Stack
+## 專案簡介
 
-- Vue 3
-- Vite
-- Pinia (狀態管理)
-- Vue Router
-- TailwindCSS
-- SASS
-- ESLint + Prettier (程式碼品質工具)
-- Stylelint
-- 套件自動引入工具 (unplugin-auto-import)
-- 自動排序 import 語句的 Prettier plugin (@ianvs/prettier-plugin-sort-imports)
-- Vitest (單元測試框架)
+本專案是一個完整的書籍管理系統，具備完整的 CRUD 功能，使用 TanStack Query 進行伺服器狀態管理，並採用 json-server 作為模擬後端 API。專案展示了如何在 Vue 3 生態系統中實現高效的資料同步和使用者體驗優化。
 
+## 主要功能
+
+- 📚 **書籍列表顯示** - 響應式卡片佈局展示書籍資訊
+- 🔍 **即時搜尋** - 支援書名、作者等多欄位搜尋
+- 📖 **書籍詳細資料** - 側邊面板顯示完整書籍資訊
+- ➕ **新增書籍** - 表單驗證和資料新增功能
+- ✏️ **編輯書籍** - 即時編輯和更新書籍資訊
+- 🗑️ **刪除書籍** - 安全刪除機制
+- ⚡ **資料預載** - 滑鼠懸停時預先載入書籍詳細資料
+- 🔄 **智能快取** - TanStack Query 自動快取和背景更新
+- 📱 **響應式設計** - 適配各種裝置螢幕尺寸
+
+## 技術棧
+
+### 核心框架
+- **Vue 3** - 使用 Composition API 和 `<script setup>` 語法
+- **Vite** - 快速建置工具和開發伺服器
+- **TanStack Query** - 強大的伺服器狀態管理庫
+- **Vue Router** - 前端路由管理
+- **Pinia** - 輕量級狀態管理庫
+
+### UI 與樣式
+- **Tailwind CSS** - 實用優先的 CSS 框架
+- **SASS** - CSS 預處理器
+
+### 開發工具
+- **TypeScript 風格 JSDoc** - 完整的型別標註
+- **ESLint + Prettier** - 程式碼品質控制和格式化
+- **Stylelint** - CSS 程式碼品質檢查
+- **Vitest** - 單元測試框架
+- **Vue DevTools** - Vue 開發者工具
+
+### 後端與資料
+- **json-server** - 模擬 REST API 伺服器
+- **Axios** - HTTP 客戶端庫
+
+## 開發環境需求
+
+- **Node.js** 20+ 版本
+- **pnpm** 9+ 版本（建議使用 pnpm 作為套件管理器）
 
 ## 建議的開發環境設定
 
-- [VSCode](https://code.visualstudio.com/) 
-- [Vue -Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+### VS Code 插件
+
+- [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
 - [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
 - [Stylelint](https://marketplace.visualstudio.com/items?itemName=stylelint.vscode-stylelint)
-- [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss#review-details)
-
-- Node.js 20+ 版本
-- pnpm 9+ 版本
+- [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
 
 ## 專案設定
 
-安裝依賴：
-```sh
+### 1. 安裝依賴
+```bash
 pnpm install
 ```
 
-### 開發指令
-
-開發環境運行（支援熱重載）：
-```sh
+### 2. 啟動開發環境
+```bash
+# 啟動前端開發伺服器（支援熱重載）
 pnpm dev
+
+# 啟動模擬後端 API 伺服器
+pnpm server
 ```
 
-建置生產版本：
-```sh
+開發伺服器會在以下埠號運行：
+- 前端：http://localhost:5173
+- 後端 API：http://localhost:3004
+
+### 3. 建置生產版本
+```bash
+# 建置生產版本
 pnpm build
-```
 
-預覽建置結果：
-```sh
+# 預覽建置結果
 pnpm preview
 ```
 
-### 程式碼品質與測試
+## 程式碼品質與測試
 
-執行程式碼格式化：
-```sh
+```bash
+# 執行程式碼格式化
 pnpm format
-```
 
-執行 ESLint 檢查與自動修復：
-```sh
+# 執行 ESLint 檢查與自動修復
 pnpm lint
-```
 
-執行單元測試：
-```sh
+# 執行單元測試
 pnpm test:unit
 ```
 
-## 專案結構說明
+## 專案結構
 
-- `/src` - 原始碼目錄
-- `/public` - 靜態資源目錄
-- `/tests` - 測試檔案目錄
+```
+vue-tanstak-query-practice/
+├── db.json                    # 模擬資料庫（json-server）
+├── src/
+│   ├── api/                   # API 相關檔案
+│   │   ├── api.js            # API 介面定義
+│   │   └── types/            # TypeScript 型別定義
+│   ├── components/           # 通用組件
+│   ├── query/                # TanStack Query 相關設定
+│   ├── router/               # Vue Router 路由設定
+│   ├── stores/               # Pinia 狀態管理
+│   ├── views/                # 頁面組件
+│   │   └── TanstackView/     # 書籍管理主頁面
+│   │       ├── components/   # 書籍管理相關組件
+│   │       │   ├── BookList.vue
+│   │       │   ├── BookDetailPanel.vue
+│   │       │   ├── BookAddForm.vue
+│   │       │   ├── BookEditForm.vue
+│   │       │   └── SearchFilter.vue
+│   │       └── TanstackView.vue
+│   └── style/                # 全域樣式
+└── public/                   # 靜態資源
+```
+
+## 開發指南
+
+### TanStack Query 使用模式
+
+本專案展示了 TanStack Query 的最佳實踐：
+
+1. **Query Keys** - 使用結構化的查詢鍵
+2. **Mutations** - 處理 CUD 操作
+3. **Optimistic Updates** - 樂觀更新提升 UX
+4. **Background Refetch** - 背景資料同步
+5. **Prefetching** - 預載機制
+
+### 型別安全
+
+專案使用 TypeScript 風格的 JSDoc 註解，確保：
+- 完整的型別標註
+- IntelliSense 支援
+- 編譯時型別檢查
+
+### 程式碼風格
+
+遵循專案的程式碼風格指南：
+- 使用繁體中文進行註解
+- 函式名稱使用 camelCase
+- 型別定義使用 PascalCase
+- 完整的 JSDoc 型別標註
+
+## API 資料格式
+
+### 書籍資料結構
+```typescript
+interface Book {
+  id: string
+  title: string
+  author: string
+  authorId: number
+  categoryId: number
+  price: number
+  originalPrice: number
+  isbn: string
+  publisher: string
+  publishDate: string
+  pages: number
+  language: string
+  description: string
+  coverImage: string
+  stock: number
+  rating: number
+  reviews: number
+  isRecommended: boolean
+}
+```
 
 ## 相關文件
 
-- [Vite 設定參考](https://vitejs.dev/config/)
+### 官方文件
 - [Vue 3 文件](https://vuejs.org/)
+- [TanStack Query 文件](https://tanstack.com/query/latest/docs/framework/vue/overview)
 - [Pinia 文件](https://pinia.vuejs.org/)
-- [TailwindCSS 文件](https://tailwindcss.com/docs)
-- [Stylelint 文件](https://stylelint.io/)
+- [Vue Router 文件](https://router.vuejs.org/)
+- [Vite 文件](https://vitejs.dev/)
+
+### 開發工具
+- [Tailwind CSS 文件](https://tailwindcss.com/docs)
 - [ESLint 文件](https://eslint.org/)
 - [Prettier 文件](https://prettier.io/)
+- [Vitest 文件](https://vitest.dev/)
+
+### 相關套件
+- [json-server 文件](https://github.com/typicode/json-server)
+- [Axios 文件](https://axios-http.com/)
+
+
+這個專案展示了如何在 Vue 3 生態系統中使用 TanStack Query 進行高效的資料管理，是學習現代前端開發技術的絕佳範例。
