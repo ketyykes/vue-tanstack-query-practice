@@ -285,8 +285,12 @@ const getCacheKeys = () => {
     @click="getCacheKeys"
     class="mb-5 rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
   >
-    getCacheKeys
+    🔍 getCacheKeys
   </button>
+  <span class="ml-5 text-sm text-gray-600">
+    🔍 調試工具：點擊可在 console 查看目前 TanStack Query
+    的所有快取金鑰，幫助了解快取狀態與結構
+  </span>
   <div v-if="booksError" class="text-center text-red-500">
     載入書籍時發生錯誤：{{ booksError.message }}
   </div>

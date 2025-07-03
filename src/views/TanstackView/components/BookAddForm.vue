@@ -252,17 +252,17 @@ const handleInput = (field, event) => {
         </div>
 
         <!-- 操作按鈕 -->
-        <div class="flex space-x-2 pt-3">
+        <div class="flex pt-3">
           <button
             @click="$emit('create')"
             :disabled="isCreatePending"
-            class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
+            class="mx-8 block rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 disabled:opacity-50"
           >
             {{ isCreatePending ? '新增中...' : '新增書籍' }}
           </button>
           <button
             @click="$emit('cancel')"
-            class="rounded bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
+            class="mx-8 block rounded bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
           >
             取消
           </button>

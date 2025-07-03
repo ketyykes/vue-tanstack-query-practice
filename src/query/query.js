@@ -64,23 +64,15 @@ export const useBooksQuery = (queryString) => {
 export const useBookQuery = (id, enabled) => {
   return useQuery({
     // 使用 computed 讓 queryKey 響應 id 的變化
-    queryKey: computed(() => {
-      const idValue = id?.value
-      console.log('idValue', bookKeys.detail(idValue ? String(idValue) : ''))
-      return bookKeys.detail(idValue ? String(idValue) : '')
-    }),
+    queryKey: computed(() =>
+      bookKeys.detail(id?.value ? String(id.value) : ''),
+    ),
     // queryFn 會在 queryKey 變化時自動重新執行
     queryFn: () => {
-      const idValue = id?.value
-      return bookApi.getById(Number(idValue))
+      return bookApi.getById(id?.value)
     },
     // 利用 enabled 選項控制何時執行查詢 - tkdodo 推薦的強大功能
-    enabled:
-      enabled ||
-      computed(() => {
-        const hasValidId = !!id?.value
-        return hasValidId
-      }),
+    enabled: enabled || computed(() => !!id?.value),
     staleTime: 5 * 60 * 1000,
   })
 }

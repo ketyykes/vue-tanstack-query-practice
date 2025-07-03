@@ -3,7 +3,7 @@ import axios from 'axios'
 /** @typedef {import('./types/api.js').Book} Book */
 
 /** @type {string} */
-const baseUrl = 'http://localhost:3004'
+const baseUrl = import.meta.env.VITE_BASE_API || 'http://localhost:3004'
 
 /** @type {import('axios').AxiosInstance} */
 const publicService = axios.create({
@@ -77,7 +77,7 @@ const bookRemoveRouteCreator = (id) => `/books/${id}`
  *
  * @type {{
  *   getAll: (queryString?: string) => Promise<Book[]>
- *   getById: (id: number) => Promise<Book>
+ *   getById: (id: number | string) => Promise<Book>
  *   create: (bookData: Omit<Book, 'id'>) => Promise<Book>
  *   update: (id: number, bookData: Partial<Book>) => Promise<Book>
  *   delete: (id: number) => Promise<void>
