@@ -46,7 +46,6 @@ const handleDelete = (e) => {
 }
 
 const onSelectBook = () => {
-  console.log('hello')
   emit('selectBook', props.book)
 }
 </script>
