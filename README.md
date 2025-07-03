@@ -9,14 +9,13 @@
 ## 主要功能
 
 - 📚 **書籍列表顯示** - 響應式卡片佈局展示書籍資訊
-- 🔍 **即時搜尋** - 支援書名、作者等多欄位搜尋
+- 🔍 **即時搜尋** - 支援書名
 - 📖 **書籍詳細資料** - 側邊面板顯示完整書籍資訊
-- ➕ **新增書籍** - 表單驗證和資料新增功能
-- ✏️ **編輯書籍** - 即時編輯和更新書籍資訊
+- ➕ **新增書籍** - 資料新增功能
+- ✏️ **編輯書籍** - 編輯和更新書籍資訊
 - 🗑️ **刪除書籍** - 安全刪除機制
 - ⚡ **資料預載** - 滑鼠懸停時預先載入書籍詳細資料
 - 🔄 **智能快取** - TanStack Query 自動快取和背景更新
-- 📱 **響應式設計** - 適配各種裝置螢幕尺寸
 
 ## 技術棧
 
@@ -32,10 +31,9 @@
 - **SASS** - CSS 預處理器
 
 ### 開發工具
-- **TypeScript 風格 JSDoc** - 完整的型別標註
+- **TypeScript 風格 JSDoc** - JSDoc 型別標註
 - **ESLint + Prettier** - 程式碼品質控制和格式化
 - **Stylelint** - CSS 程式碼品質檢查
-- **Vitest** - 單元測試框架
 - **Vue DevTools** - Vue 開發者工具
 
 ### 後端與資料
@@ -133,9 +131,7 @@ vue-tanstak-query-practice/
 
 1. **Query Keys** - 使用結構化的查詢鍵
 2. **Mutations** - 處理 CUD 操作
-3. **Optimistic Updates** - 樂觀更新提升 UX
-4. **Background Refetch** - 背景資料同步
-5. **Prefetching** - 預載機制
+3. **Prefetching** - 預載機制
 
 ### 型別安全
 
@@ -147,10 +143,9 @@ vue-tanstak-query-practice/
 ### 程式碼風格
 
 遵循專案的程式碼風格指南：
-- 使用繁體中文進行註解
 - 函式名稱使用 camelCase
 - 型別定義使用 PascalCase
-- 完整的 JSDoc 型別標註
+- JSDoc 型別標註
 
 ## API 資料格式
 
@@ -197,5 +192,10 @@ interface Book {
 - [json-server 文件](https://github.com/typicode/json-server)
 - [Axios 文件](https://axios-http.com/)
 
+### 參考資料
 
-這個專案展示了如何在 Vue 3 生態系統中使用 TanStack Query 進行高效的資料管理，是學習現代前端開發技術的絕佳範例。
+- [Practical React Query](https://tkdodo.eu/blog/practical-react-query)
+- [React Query Data Transformations](https://tkdodo.eu/blog/react-query-data-transformations)
+- [React Query Render Optimizations](https://tkdodo.eu/blog/react-query-render-optimizations)
+- [Effective React Query Keys](https://tkdodo.eu/blog/effective-react-query-keys)
+- [Mastering Mutations in React Query](https://tkdodo.eu/blog/mastering-mutations-in-react-query)
