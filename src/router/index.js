@@ -2,12 +2,10 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 
 import AboutView from '@/views/AboutView/AboutView.vue'
 import HomeView from '@/views/HomeView/HomeView.vue'
+import PollingView from '@/views/PollingView/PollingView.vue'
 import TanstackView from '@/views/TanstackView/TanstackView.vue'
 
-/**
- * @type {import('vue-router').RouteRecordRaw[]}
- * 路由設定，支援巢狀結構與 Layout
- */
+/** @type {import('vue-router').RouteRecordRaw[]} 路由設定，支援巢狀結構與 Layout */
 const routes = [
   {
     path: '/',
@@ -23,6 +21,11 @@ const routes = [
     path: '/tanstack',
     name: 'tanstack',
     component: TanstackView,
+  },
+  {
+    path: '/polling',
+    name: 'polling',
+    component: PollingView,
   },
 ]
 
