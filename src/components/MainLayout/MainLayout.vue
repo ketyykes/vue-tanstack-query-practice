@@ -4,6 +4,24 @@ import { useRoute } from 'vue-router'
 import { VueQueryDevtools } from '@tanstack/vue-query-devtools'
 
 /**
+ * 導航項目型別定義
+ *
+ * @typedef {{ to: string; label: string }} NavigationItem
+ */
+
+/**
+ * 導航項目清單
+ *
+ * @type {NavigationItem[]}
+ */
+const navigationItems = [
+  { to: '/', label: '首頁' },
+  { to: '/about', label: '關於我們' },
+  { to: '/tanstack', label: 'TanStack' },
+  { to: '/polling', label: 'Polling' },
+]
+
+/**
  * 判斷當前路徑是否為指定路徑
  *
  * @type {(path: string) => boolean}
@@ -20,34 +38,16 @@ const isActive = (path) => route.path === path
         <nav class="py-4">
           <div class="flex space-x-8">
             <RouterLink
-              to="/"
+              v-for="item in navigationItems"
+              :key="item.to"
+              :to="item.to"
               :class="[
                 'inline-flex items-center border-b-2 px-1 py-2 text-sm font-medium transition-colors duration-200',
-                isActive('/')
+                isActive(item.to)
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
               ]"
-              >首頁</RouterLink
-            >
-            <RouterLink
-              to="/about"
-              :class="[
-                'inline-flex items-center border-b-2 px-1 py-2 text-sm font-medium transition-colors duration-200',
-                isActive('/about')
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-              ]"
-              >關於我們</RouterLink
-            >
-            <RouterLink
-              to="/tanstack"
-              :class="[
-                'inline-flex items-center border-b-2 px-1 py-2 text-sm font-medium transition-colors duration-200',
-                isActive('/tanstack')
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
-              ]"
-              >TanStack</RouterLink
+              >{{ item.label }}</RouterLink
             >
           </div>
         </nav>
